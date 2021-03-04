@@ -2,6 +2,7 @@
 #define Droideka_Movement_h
 
 #include <Droideka_Position.h>
+#include "../Droideka/utils/structs.h"
 #include <Arduino.h>
 
 class Droideka_Movement
@@ -59,4 +60,5 @@ public:
     Droideka_Position get_final_position(Droideka_Position start_pos);
     Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, unsigned long time_);
     ErrorCode establish_legs_movement();
+};
 #endif
