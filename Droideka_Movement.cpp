@@ -2,10 +2,17 @@
 
 Droideka_Movement::Droideka_Movement() {}
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int throttle_longitudinal, int throttle_lateral, bool lifting_legs)
+Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, bool lifting_legs)
 {
     start_position = start_position_;
-    establish_cog_movement(throttle_longitudinal, throttle_lateral);
+    if (!lifting_legs)
+    {
+        establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_vertical, throttle_angle);
+    }
+    else
+    {
+        establish_cog_movement(0, 0);
+    }
     end_position = get_final_position(start_position);
     establish_legs_movement(lifting_legs);
     // valid_movement = true;
@@ -34,6 +41,46 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int thro
     // }
 }
 
+ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
+{
+    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    {
+        tx[ii] = ((float)throttle_lateral - 105.0) * (2.0 - (-2.0)) / (792.0 - 105.0) + -2.0;
+        ty[ii] = ((float)throttle_longitudinal - 831.0) * (2.0 - (-2.0)) / (140.0 - 831.0) + -2.0;
+        tz[ii] = ((float)throttle_vertical - 825.0) * (-2.0 - (2.0)) / (137.0 - 825.0) + 2.0;
+        alpha[ii] = ((float)throttle_angle - 185.0) * (20.0 - (-20.0)) / (863.0 - 185.0) + -20.0;
+    }
+    // for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    // {
+    //     ty[ii] = 3.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
+    //     tx[ii] = -2.5 * sin(2 * 3.141592 * ty[ii] / 4.0);
+    //     tz[ii] = Y_TOUCHING;
+    //     alpha[ii] = 0;
+    // }
+    leg_order[3] = 1;
+    leg_order[1] = 2;
+    leg_order[2] = 3;
+    leg_order[0] = 4;
+
+    for (int ii = 0; ii < LEG_NB; ii++)
+    {
+        leg_lifted[ii] = false;
+    }
+    moving_leg_nb = 4;
+    delta_time = TIME_SAMPLE / (moving_leg_nb * 2);
+    // }
+
+    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    {
+        reverse_tx[ii] = -tx[ii];
+        reverse_ty[ii] = -ty[ii];
+        reverse_tz[ii] = -tz[ii];
+        reverse_alpha[ii] = -alpha[ii];
+    }
+
+    return NO_ERROR;
+}
+
 ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, int throttle_lateral)
 {
     // if (throttle_longitudinal > 0 && abs(throttle_longitudinal) > abs(throttle_lateral))
@@ -42,14 +89,15 @@ ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, i
     // for (int ii = 0; ii < TIME_SAMPLE; ii++)
     // {
     //     tx[ii] = 0;
-    //     ty[ii] = 4.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
+    //     ty[ii] = 0;
+    //     tz[ii] = 2.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
     //     alpha[ii] = 0;
     // }
     for (int ii = 0; ii < TIME_SAMPLE; ii++)
     {
-        ty[ii] = 3.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
+        ty[ii] = 4.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
         tx[ii] = -2.5 * sin(2 * 3.141592 * ty[ii] / 4.0);
-        tz[ii] = Y_TOUCHING;
+        tz[ii] = 0;
         alpha[ii] = 0;
     }
     leg_order[3] = 1;
@@ -521,7 +569,7 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
         temp[ii][0] = (feet_start[ii][0] - temp_trans[ii][0]) * cos(PI * rot_angle[time_elapsed] / 180) + (feet_start[ii][1] - temp_trans[ii][1]) * sin(PI * rot_angle[time_elapsed] / 180);
         temp[ii][1] = (feet_start[ii][1] - temp_trans[ii][1]) * cos(PI * rot_angle[time_elapsed] / 180) + (feet_start[ii][0] - temp_trans[ii][0]) * sin(PI * rot_angle[time_elapsed] / 180);
 
-        temp_final_pos[ii][2] = trans_z[time_elapsed];
+        temp_final_pos[ii][2] = start_pos.legs[ii][2] + trans_z[time_elapsed];
         temp_final_pos[ii][1] = sqrt(temp[ii][0] * temp[ii][0] + temp[ii][1] * temp[ii][1]);
         if (temp_final_pos[ii][1] == 0) // Si x et y sont nuls
         {

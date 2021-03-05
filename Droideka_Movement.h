@@ -50,8 +50,9 @@ public:
         {1, -1}};
 
     Droideka_Movement();
-    Droideka_Movement(Droideka_Position start_position_, int throttle_longitudinal, int throttle_lateral, bool lifting_legs);
+    Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, bool lifting_legs);
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
+    ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
     ErrorCode establish_cog_movement_advanced(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
     ErrorCode establish_cog_movement_stable(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
     ErrorCode establish_cog_movement_next_level(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
