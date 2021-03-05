@@ -67,14 +67,44 @@ ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, i
 
     for (int ii = 0; ii < TIME_SAMPLE; ii++)
     {
-        tx[ii] = 0;
-        if (ii < TIME_SAMPLE / 2)
+        float t = (float)ii + 1.0;
+        float d = 2.0;
+        float T = (float)TIME_SAMPLE;
+        float sep = 10.0;
+        if (ii < TIME_SAMPLE / sep)
         {
-            ty[ii] = 2 * 2 / TIME_SAMPLE * (ii + 1); //MAX_LONGITUDINAL_COG_MOVE * ii / TIME_SAMPLE;
+            tx[ii] = 0;
+            ty[ii] = sep * d * t / T;
         }
-        if (ii >= TIME_SAMPLE / 2)
+        if (ii >= TIME_SAMPLE / sep && ii < 2 * TIME_SAMPLE / sep)
         {
-            ty[ii] = 2 * 2 / TIME_SAMPLE * (TIME_SAMPLE - (ii + 1)); //MAX_LONGITUDINAL_COG_MOVE * ii / TIME_SAMPLE;
+            tx[ii] = -sep * d / T * (t - TIME_SAMPLE / sep);
+            ty[ii] = d;
+        }
+        if (ii >= 2 * TIME_SAMPLE / sep && ii < 4 * TIME_SAMPLE / sep)
+        {
+            tx[ii] = -d;
+            ty[ii] = -sep * d / T * (t - 3 * TIME_SAMPLE / sep);
+        }
+        if (ii >= 4 * TIME_SAMPLE / sep && ii < 6 * TIME_SAMPLE / sep)
+        {
+            tx[ii] = sep * d / T * (t - 5 * TIME_SAMPLE / sep);
+            ty[ii] = -d;
+        }
+        if (ii >= 6 * TIME_SAMPLE / sep && ii < 8 * TIME_SAMPLE / sep)
+        {
+            tx[ii] = d;
+            ty[ii] = sep * d / T * (t - 7 * TIME_SAMPLE / sep);
+        }
+        if (ii >= 8 * TIME_SAMPLE / sep && ii < 9 * TIME_SAMPLE / sep)
+        {
+            tx[ii] = -sep * d / T * (t - 9 * TIME_SAMPLE / sep);
+            ty[ii] = d;
+        }
+        if (ii >= 9 * TIME_SAMPLE / sep && ii < 10 * TIME_SAMPLE / sep)
+        {
+            tx[ii] = 0;
+            ty[ii] = -sep * d / T * (t - 10 * TIME_SAMPLE / sep);
         }
         alpha[ii] = 0;
     }
@@ -499,7 +529,7 @@ void Droideka_Movement::establish_leg_order(float throttle_longitudinal, float t
     }
 }
 
-Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float angle[TIME_SAMPLE], unsigned long time_elapsed, int one_leg = -1)
+Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1)
 {
     if (time_elapsed < 0 || time_elapsed > TIME_SAMPLE)
     {
