@@ -56,9 +56,9 @@ public:
     bool establish_stableness(float move_longitudinal, float move_lateral, float move_angle);
     bool find_extreme_alpha(float throttle_longitudinal, float throttle_lateral, float move_longitudinal, float move_lateral);
     void establish_leg_order(float throttle_longitudinal, float throttle_lateral);
-    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1);
+    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1);
     Droideka_Position get_final_position(Droideka_Position start_pos);
-    Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, unsigned long time_);
+    Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement();
 };
 #endif
