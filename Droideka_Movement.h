@@ -29,9 +29,11 @@ public:
 
     float tx[TIME_SAMPLE];
     float ty[TIME_SAMPLE];
+    float tz[TIME_SAMPLE];
     float alpha[TIME_SAMPLE];
     float reverse_tx[TIME_SAMPLE];
     float reverse_ty[TIME_SAMPLE];
+    float reverse_tz[TIME_SAMPLE];
     float reverse_alpha[TIME_SAMPLE];
 
     float middle_point[2];
@@ -48,7 +50,7 @@ public:
         {1, -1}};
 
     Droideka_Movement();
-    Droideka_Movement(Droideka_Position start_position_, int throttle_longitudinal, int throttle_lateral);
+    Droideka_Movement(Droideka_Position start_position_, int throttle_longitudinal, int throttle_lateral, bool lifting_legs);
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
     ErrorCode establish_cog_movement_advanced(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
     ErrorCode establish_cog_movement_stable(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
@@ -56,9 +58,9 @@ public:
     bool establish_stableness(float move_longitudinal, float move_lateral, float move_angle);
     bool find_extreme_alpha(float throttle_longitudinal, float throttle_lateral, float move_longitudinal, float move_lateral);
     void establish_leg_order(float throttle_longitudinal, float throttle_lateral);
-    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1);
+    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1);
     Droideka_Position get_final_position(Droideka_Position start_pos);
     Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
-    ErrorCode establish_legs_movement();
+    ErrorCode establish_legs_movement(bool lifting_legs);
 };
 #endif
