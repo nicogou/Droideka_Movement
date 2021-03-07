@@ -1,3 +1,12 @@
+enum Movement_Type
+{
+    UNSPECIFIED = 0,
+    CENTER_OF_GRAVITY_TRAJ = 1,
+    LEGS_TRAJ = 2,
+    ROBOT_TRAJ = 3,
+};
+typedef enum Movement_Type Movement_Type;
+
 #ifndef Droideka_Movement_h
 #define Droideka_Movement_h
 
@@ -8,24 +17,21 @@
 class Droideka_Movement
 {
 public:
-    Droideka_Position start_position;
-    Droideka_Position end_position;
-    Droideka_Position positions[TIME_SAMPLE];
-    bool valid_movement = false;
-    bool stable_movement = false; // A implémenter.
+    Movement_Type type = UNSPECIFIED;
+    bool started = false;
+    bool finished = false;
+    unsigned int iter = 0;
+    unsigned long start = 0;
+    unsigned long time_span = 0;
+    bool next_pos_calc = false;
 
-    unsigned long start_walk_time;
+    Droideka_Position start_position;
+    Droideka_Position next_position;
+    Droideka_Position end_position;
 
     int leg_order[LEG_NB];
-    int first_leg_to_move;
-    bool reverse_angle;
-    int shoulder_right;
-    int shoulder_left;
-    bool leg_lifted[LEG_NB];
     int moving_leg_nb = 0;
     unsigned long delta_time;
-    float alpha_max;
-    float alpha_min;
 
     float tx[TIME_SAMPLE];
     float ty[TIME_SAMPLE];
@@ -35,8 +41,6 @@ public:
     float reverse_ty[TIME_SAMPLE];
     float reverse_tz[TIME_SAMPLE];
     float reverse_alpha[TIME_SAMPLE];
-
-    float middle_point[2];
 
     float shoulder_pos[LEG_NB][2] = {
         {-BODY_WIDTH / 2, BODY_LENGTH / 2},
@@ -50,18 +54,13 @@ public:
         {1, -1}};
 
     Droideka_Movement();
+    Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span);
     Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, bool lifting_legs);
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
     ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
-    ErrorCode establish_cog_movement_advanced(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
-    ErrorCode establish_cog_movement_stable(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
-    ErrorCode establish_cog_movement_next_level(int throttle_longitudinal, int throttle_lateral, int throttle_angle);
-    bool establish_stableness(float move_longitudinal, float move_lateral, float move_angle);
-    bool find_extreme_alpha(float throttle_longitudinal, float throttle_lateral, float move_longitudinal, float move_lateral);
-    void establish_leg_order(float throttle_longitudinal, float throttle_lateral);
-    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], int time_elapsed, int one_leg = -1);
+    Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x, float trans_y, float trans_z, float rot_angle, int one_leg = -1);
     Droideka_Position get_final_position(Droideka_Position start_pos);
-    Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
-    ErrorCode establish_legs_movement(bool lifting_legs);
+    // Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
+    // ErrorCode establish_legs_movement(bool lifting_legs);
 };
 #endif
