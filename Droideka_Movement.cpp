@@ -186,10 +186,6 @@ Droideka_Position Droideka_Movement::get_future_position(int iteration)
         temp[ii][0] = param1[iteration];
         temp[ii][1] = param2[iteration];
         temp[ii][2] = param3[iteration];
-        Serial.println(ii);
-        Serial.println(temp[ii][0]);
-        Serial.println(temp[ii][1]);
-        Serial.println(temp[ii][2]);
     }
     Droideka_Position final_pos(temp);
     return final_pos;
