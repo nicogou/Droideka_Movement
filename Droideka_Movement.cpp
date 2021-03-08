@@ -54,11 +54,9 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float th
     }
 }
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, int which_leg, unsigned long span)
+Droideka_Movement::Droideka_Movement(Droideka_Position end_position_, int which_leg, unsigned long span)
 {
     type = DIRECT_FOOT_MVMT;
-
-    start_position = start_position_;
 
     for (int ii = 0; ii < TIME_SAMPLE; ii++)
     {

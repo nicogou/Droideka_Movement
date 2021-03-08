@@ -60,7 +60,7 @@ public:
     Droideka_Movement();
     Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span);
     Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int one_leg = -1);
-    Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, int which_leg, unsigned long span);
+    Droideka_Movement(Droideka_Position end_position_, int which_leg, unsigned long span);
     Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, bool lifting_legs);
     void add_position(Droideka_Position pos, int which_leg, unsigned long span);
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
