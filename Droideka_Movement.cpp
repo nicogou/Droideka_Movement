@@ -22,16 +22,17 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float tr
     type = CENTER_OF_GRAVITY_TRAJ;
 
     start_position = start_position_;
+    time_span = span * 1000;
 
-    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    for (int ii = 0; ii < nb_iter; ii++)
     {
         param1[ii] = trans_x[ii];
         param2[ii] = trans_y[ii];
         param3[ii] = trans_z[ii];
         param4[ii] = rot_angle[ii];
-    }
 
-    time_span = span * 1000;
+        time_iter[ii] = (ii + 1) * time_span / nb_iter;
+    }
 }
 
 Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int one_leg = -1)
@@ -39,17 +40,50 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float th
     type = LEGS_TRAJ;
 
     start_position = start_position_;
+    leg_id = one_leg;
+    time_span = span * 1000;
 
-    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    for (int ii = 0; ii < nb_iter; ii++)
     {
         param1[ii] = theta[ii];
         param2[ii] = rho[ii];
         param3[ii] = height[ii];
         param4[ii] = 0;
-    }
 
-    leg_id = one_leg;
-    time_span = span * 1000;
+        time_iter[ii] = (ii + 1) * time_span / nb_iter;
+    }
+}
+
+Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, int which_leg, unsigned long span)
+{
+    type = DIRECT_FOOT_MVMT;
+
+    start_position = start_position_;
+
+    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    {
+        param1[ii] = 0;
+        param2[ii] = 0;
+        param3[ii] = 0;
+        param4[ii] = 0;
+
+        time_iter[ii] = 0;
+    }
+    nb_iter = 0;
+    add_position(end_position_, which_leg, span);
+}
+
+void Droideka_Movement::add_position(Droideka_Position pos, int which_leg, unsigned long span)
+{
+    if (type == DIRECT_FOOT_MVMT)
+    {
+        param1[nb_iter] = pos.legs[which_leg][0];
+        param2[nb_iter] = pos.legs[which_leg][1];
+        param3[nb_iter] = pos.legs[which_leg][2];
+        time_span += span * 1000;
+        time_iter[nb_iter] = time_span;
+        nb_iter++;
+    }
 }
 
 ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
@@ -133,10 +167,32 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
     {
         return get_future_position(start_pos, param1[ii], param2[ii], param3[ii], param4[ii]);
     }
-    if (type == LEGS_TRAJ)
+    else if (type == LEGS_TRAJ)
     {
         return get_future_position(param1[ii], param2[ii], param3[ii], leg_id);
     }
+    else if (type == DIRECT_FOOT_MVMT)
+    {
+        return get_future_position(ii);
+    }
+}
+
+Droideka_Position Droideka_Movement::get_future_position(int iteration)
+{
+    float temp[LEG_NB][3];
+    for (int ii = 0; ii < LEG_NB; ii++)
+    {
+
+        temp[ii][0] = param1[iteration];
+        temp[ii][1] = param2[iteration];
+        temp[ii][2] = param3[iteration];
+        Serial.println(ii);
+        Serial.println(temp[ii][0]);
+        Serial.println(temp[ii][1]);
+        Serial.println(temp[ii][2]);
+    }
+    Droideka_Position final_pos(temp);
+    return final_pos;
 }
 
 Droideka_Position Droideka_Movement::get_future_position(float theta, float rho, float height, int one_leg = -1)
