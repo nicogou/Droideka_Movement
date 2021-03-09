@@ -4,19 +4,21 @@ Droideka_Movement::Droideka_Movement() {}
 
 Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span, bool lifting_legs)
 {
-    type = CENTER_OF_GRAVITY_TRAJ;
     start_position = start_position_;
     time_span = span * 1000;
 
     if (!lifting_legs)
     {
+        type = CENTER_OF_GRAVITY_TRAJ;
         establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_vertical, throttle_angle);
+        end_position = get_final_position(start_position);
     }
     else
     {
+        type = ROBOT_TRAJ;
         establish_cog_movement(0, 0);
+        end_position = start_position;
     }
-    end_position = get_final_position(start_position);
     //establish_legs_movement(lifting_legs);
 }
 
@@ -116,37 +118,26 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
     leg_order[0] = 4;
 
     moving_leg_nb = 4;
-    delta_time = TIME_SAMPLE / (moving_leg_nb * 2);
-
-    for (int ii = 0; ii < 12; ii++)
-    {
-        for (int jj = 0; jj < TIME_SAMPLE; jj++)
-        {
-            reverse_params[ii][jj] = -params[ii][jj];
-        }
-    }
+    delta_time = nb_iter / (moving_leg_nb * 2);
 
     return NO_ERROR;
 }
 
 ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, int throttle_lateral)
 {
-    // if (throttle_longitudinal > 0 && abs(throttle_longitudinal) > abs(throttle_lateral))
-    // // Moving forward.
-    // {
-    // for (int ii = 0; ii < TIME_SAMPLE; ii++)
-    // {
-    //     param1[ii] = 0;
-    //     param2[ii] = 0;
-    //     param3[ii] = 2.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
-    //     param4[ii] = 0;
-    // }
-    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    for (int ii = 0; ii < nb_iter; ii++)
     {
-        params[1][ii] = 4.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
-        params[0][ii] = -2.5 * sin(2 * 3.141592 * params[1][ii] / 4.0);
+        // params[1][ii] = 2.0 * ((float)ii + 1.0) / (float)nb_iter;
+        // params[0][ii] = -2.0 * sin(2 * 3.141592 * params[1][ii] / 2.0);
+        params[1][ii] = 2.0 * ((float)ii + 1.0) / (float)nb_iter;
+        reverse_params[1][ii] = -(2.0 * ((float)nb_iter - 1 - ii) / (float)nb_iter);
+        params[0][ii] = 0;
+        reverse_params[0][ii] = 0;
         params[2][ii] = 0;
+        reverse_params[2][ii] = 0;
         params[3][ii] = 0;
+        reverse_params[3][ii] = 0;
+        time_iter[ii] = (ii + 1) * time_span / nb_iter;
     }
     leg_order[3] = 1;
     leg_order[1] = 2;
@@ -154,16 +145,7 @@ ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, i
     leg_order[0] = 4;
 
     moving_leg_nb = 4;
-    delta_time = TIME_SAMPLE / (moving_leg_nb * 2);
-    // }
-
-    for (int ii = 0; ii < 12; ii++)
-    {
-        for (int jj = 0; jj < TIME_SAMPLE; jj++)
-        {
-            reverse_params[ii][jj] = -params[ii][jj];
-        }
-    }
+    delta_time = nb_iter / (moving_leg_nb * 2);
 
     return NO_ERROR;
 }
@@ -181,6 +163,10 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
     else if (type == DIRECT_FOOT_MVMT)
     {
         return get_future_position(ii);
+    }
+    else if (type == ROBOT_TRAJ)
+    {
+        return get_future_position(start_pos, end_position, ii);
     }
 }
 
@@ -258,77 +244,67 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
     return final_pos;
 }
 
+Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, int ii)
+{
+    float temp[LEG_NB][3];
+    unsigned long time_leg_starts_lifting;
+    unsigned long time_leg_touches_ground_again;
+    Droideka_Position temp_current_pos = get_future_position(start_pos, params[0][ii], params[1][ii], params[2][ii], params[3][ii]);
+    Droideka_Position temp_future_pos = get_future_position(end_pos, reverse_params[0][ii], reverse_params[1][ii], reverse_params[2][ii], reverse_params[3][ii]); // Calculates the position of the legs after the leg has been lifted and put back on the ground.
+    // Droideka_Position temp_future_pos = get_future_position(start_pos, params[0][ii], params[1][ii], params[2][ii], params[3][ii]); // Calculates the position of the legs after the leg has been lifted and put back on the ground.
+
+    for (int jj = 0; jj < LEG_NB; jj++)
+    {
+        time_leg_starts_lifting = (leg_order[jj] - 1) * nb_iter / moving_leg_nb + delta_time;
+        time_leg_touches_ground_again = (leg_order[jj]) * nb_iter / moving_leg_nb - 1;
+
+        if (ii < time_leg_starts_lifting)
+        {
+            for (int kk = 0; kk < 3; kk++)
+            {
+                temp[jj][kk] = temp_current_pos.legs[jj][kk];
+            }
+        }
+        else if (ii >= time_leg_starts_lifting && ii < time_leg_touches_ground_again)
+        {
+            for (int kk = 0; kk < 3; kk++)
+            {
+                temp[jj][kk] = get_lifted_position(jj, temp_current_pos, temp_future_pos, ii)[kk];
+            }
+        }
+        else if (ii >= time_leg_touches_ground_again && ii <= nb_iter)
+        {
+            for (int kk = 0; kk < 3; kk++)
+            {
+                temp[jj][kk] = temp_future_pos.legs[jj][kk];
+            }
+        }
+    }
+    Droideka_Position result = Droideka_Position(temp);
+    return result;
+}
+
 Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_pos)
 {
     return get_future_position(start_pos, params[0][TIME_SAMPLE - 1], params[1][TIME_SAMPLE - 1], params[2][TIME_SAMPLE - 1], params[3][TIME_SAMPLE - 1]);
 }
 
-// Droideka_Position Droideka_Movement::get_lifted_position(int leg, Droideka_Position debut_pos, Droideka_Position fin_pos, int time_)
-// {
-//     float debut_time = ((float)leg_order[leg] - 1) * (float)TIME_SAMPLE / (float)moving_leg_nb + (float)delta_time;
-//     float fin_time = (float)leg_order[leg] * (float)TIME_SAMPLE / (float)moving_leg_nb - 1;
-//     float interval_time = (float)fin_time - (float)debut_time;
-//     float time_from_lifting = (float)time_ - (float)debut_time;
+float *Droideka_Movement::get_lifted_position(int leg, Droideka_Position debut_pos, Droideka_Position fin_pos, int time_)
+{
+    static float res[3];
+    float debut_time = ((float)leg_order[leg] - 1) * (float)TIME_SAMPLE / (float)moving_leg_nb + (float)delta_time;
+    float fin_time = (float)leg_order[leg] * (float)TIME_SAMPLE / (float)moving_leg_nb - 1;
+    float interval_time = (float)fin_time - (float)debut_time;
+    float time_from_lifting = (float)time_ - (float)debut_time;
 
-//     // Between the lifting and putting back of the leg, theta and X are linear, wheras Y follows a quadratic curve (arbitrarily defined)
+    // Between the lifting and putting back of the leg, theta and X are linear, wheras Y follows a quadratic curve (arbitrarily defined)
 
-//     float temp[LEG_NB][3];
-//     for (int ii = 0; ii < 2; ii++)
-//     {
-//         temp[leg][ii] = (fin_pos.legs[leg][ii] - debut_pos.legs[leg][ii]) / interval_time * time_from_lifting + debut_pos.legs[leg][ii];
-//     }
-//     temp[leg][2] = Y_NOT_TOUCHING - (Y_NOT_TOUCHING - Y_TOUCHING) * ((time_from_lifting - interval_time / 2) / (interval_time / 2)) * ((time_from_lifting - interval_time / 2) / (interval_time / 2));
+    float temp[LEG_NB][3];
+    for (int ii = 0; ii < 2; ii++)
+    {
+        res[ii] = (fin_pos.legs[leg][ii] - debut_pos.legs[leg][ii]) / interval_time * time_from_lifting + debut_pos.legs[leg][ii];
+    }
+    res[2] = Y_NOT_TOUCHING - (Y_NOT_TOUCHING - Y_TOUCHING) * ((time_from_lifting - interval_time / 2) / (interval_time / 2)) * ((time_from_lifting - interval_time / 2) / (interval_time / 2));
 
-//     Droideka_Position result(temp);
-//     return result;
-// }
-
-// ErrorCode Droideka_Movement::establish_legs_movement(bool lifting_legs)
-// {
-//     float temp[LEG_NB][3];
-//     unsigned long time_leg_starts_lifting;
-//     unsigned long time_leg_touches_ground_again;
-
-//     for (int ii = 0; ii < TIME_SAMPLE; ii++)
-//     {
-//         Droideka_Position temp_current_pos = get_future_position(start_position, param1[ii], param2[ii], param3[ii], param4[ii]); // Calculates the position of the legs before the leg is lifted.
-
-//         if (lifting_legs)
-//         {
-//             Droideka_Position temp_future_pos = get_future_position(start_position, reverse_param1[TIME_SAMPLE - 1 - ii], reverse_param2[TIME_SAMPLE - 1 - ii], reverse_param3[TIME_SAMPLE - 1 - ii], reverse_param4[TIME_SAMPLE - 1 - ii]); // Calculates the position of the legs after the leg has been lifted and put back on the ground.
-//             for (int jj = 0; jj < LEG_NB; jj++)
-//             {
-//                 time_leg_starts_lifting = (leg_order[jj] - 1) * TIME_SAMPLE / moving_leg_nb + delta_time;
-//                 time_leg_touches_ground_again = (leg_order[jj]) * TIME_SAMPLE / moving_leg_nb - 1;
-
-//                 if (ii < time_leg_starts_lifting)
-//                 {
-//                     for (int kk = 0; kk < 3; kk++)
-//                     {
-//                         temp[jj][kk] = temp_current_pos.legs[jj][kk];
-//                     }
-//                 }
-//                 else if (ii >= time_leg_starts_lifting && ii < time_leg_touches_ground_again)
-//                 {
-//                     for (int kk = 0; kk < 3; kk++)
-//                     {
-//                         temp[jj][kk] = get_lifted_position(jj, temp_current_pos, temp_future_pos, ii).legs[jj][kk];
-//                     }
-//                 }
-//                 else if (ii >= time_leg_touches_ground_again && ii <= TIME_SAMPLE)
-//                 {
-//                     for (int kk = 0; kk < 3; kk++)
-//                     {
-//                         temp[jj][kk] = temp_future_pos.legs[jj][kk];
-//                     }
-//                 }
-//             }
-//             positions[ii] = Droideka_Position(temp);
-//         }
-//         else
-//         {
-//             positions[ii] = temp_current_pos;
-//         }
-//     }
-//     return NO_ERROR;
-// }
+    return res;
+}

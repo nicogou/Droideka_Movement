@@ -60,11 +60,12 @@ public:
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
     ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
     Droideka_Position get_future_position(Droideka_Position start_pos, int ii);                                                       // Fonction générale appelée par la classe Droideka en fonction du mouvement.
-    Droideka_Position get_future_position(int ii);                                                                                    // Suite de Droideka_Position.
+    Droideka_Position get_future_position(int ii);                                                                                    // Séquence de Droideka_Position.
     Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x, float trans_y, float trans_z, float rot_angle); // Trajectoire du centre de gravité
     Droideka_Position get_future_position(float theta, float rho, float height, int one_leg = -1);                                    // Trajectoire des jambes ou de la jambe spécifiée si leg != -1.
+    Droideka_Position get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, int ii);                            // Marche.
     Droideka_Position get_final_position(Droideka_Position start_pos);
-    // Droideka_Position get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
-    // ErrorCode establish_legs_movement(bool lifting_legs);
+    float *get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
+    ErrorCode establish_legs_movement(bool lifting_legs);
 };
 #endif
