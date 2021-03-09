@@ -66,9 +66,11 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float th
     }
 }
 
-Droideka_Movement::Droideka_Movement(Droideka_Position end_position_, unsigned long span)
+Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span, int one_leg = -1)
 {
     type = DIRECT_FOOT_MVMT;
+
+    start_position = start_position_;
 
     for (int ii = 0; ii < TIME_SAMPLE; ii++)
     {
@@ -79,10 +81,10 @@ Droideka_Movement::Droideka_Movement(Droideka_Position end_position_, unsigned l
         time_iter[ii] = 0;
     }
     nb_iter = 0;
-    add_position(end_position_, span);
+    add_position(start_position, end_position_, span, one_leg);
 }
 
-void Droideka_Movement::add_position(Droideka_Position pos, unsigned long span)
+void Droideka_Movement::add_position(Droideka_Position start_position_, Droideka_Position pos, unsigned long span, int one_leg = -1)
 {
     if (type == DIRECT_FOOT_MVMT)
     {
@@ -91,6 +93,10 @@ void Droideka_Movement::add_position(Droideka_Position pos, unsigned long span)
             for (int jj = 0; jj < 3; jj++)
             {
                 params[(LEG_NB - 1) * ii + jj][nb_iter] = pos.legs[ii][jj];
+                if (one_leg != -1 && ii != one_leg)
+                {
+                    params[(LEG_NB - 1) * ii + jj][nb_iter] = start_position_.legs[ii][jj];
+                }
             }
         }
 

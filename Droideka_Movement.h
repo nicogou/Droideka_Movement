@@ -54,9 +54,9 @@ public:
     Droideka_Movement();
     Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span);
     Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int one_leg = -1);
-    Droideka_Movement(Droideka_Position end_position_, unsigned long span);
+    Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span, int one_leg = -1);
     Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span, bool lifting_legs);
-    void add_position(Droideka_Position pos, unsigned long span);
+    void add_position(Droideka_Position start_position_, Droideka_Position pos, unsigned long span, int one_leg = -1);
     ErrorCode establish_cog_movement(int throttle_longitudinal, int throttle_lateral);
     ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
     Droideka_Position get_future_position(Droideka_Position start_pos, int ii);                                                       // Fonction générale appelée par la classe Droideka en fonction du mouvement.
@@ -67,5 +67,6 @@ public:
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement(bool lifting_legs);
+    void triangles(int16_t t_long, int16_t t_lat);
 };
 #endif
