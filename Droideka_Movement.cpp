@@ -2,9 +2,12 @@
 
 Droideka_Movement::Droideka_Movement() {}
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, bool lifting_legs)
+Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span, bool lifting_legs)
 {
+    type = CENTER_OF_GRAVITY_TRAJ;
     start_position = start_position_;
+    time_span = span * 1000;
+
     if (!lifting_legs)
     {
         establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_vertical, throttle_angle);
@@ -97,20 +100,16 @@ void Droideka_Movement::add_position(Droideka_Position pos, unsigned long span)
 
 ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
 {
-    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    for (int ii = 0; ii < nb_iter; ii++)
     {
         params[0][ii] = ((float)throttle_lateral - 105.0) * (2.0 - (-2.0)) / (792.0 - 105.0) + -2.0;
         params[1][ii] = ((float)throttle_longitudinal - 831.0) * (2.0 - (-2.0)) / (140.0 - 831.0) + -2.0;
         params[2][ii] = ((float)throttle_vertical - 825.0) * (-2.0 - (2.0)) / (137.0 - 825.0) + 2.0;
         params[3][ii] = ((float)throttle_angle - 185.0) * (20.0 - (-20.0)) / (863.0 - 185.0) + -20.0;
+
+        time_iter[ii] = (ii + 1) * time_span / nb_iter;
     }
-    // for (int ii = 0; ii < TIME_SAMPLE; ii++)
-    // {
-    //     param2[ii] = 3.0 * ((float)ii + 1.0) / (float)TIME_SAMPLE;
-    //     param1[ii] = -2.5 * sin(2 * 3.141592 * param2[ii] / 4.0);
-    //     param3[ii] = Y_TOUCHING;
-    //     param4[ii] = 0;
-    // }
+
     leg_order[3] = 1;
     leg_order[1] = 2;
     leg_order[2] = 3;
@@ -118,7 +117,7 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
 
     moving_leg_nb = 4;
     delta_time = TIME_SAMPLE / (moving_leg_nb * 2);
-    // }
+
     for (int ii = 0; ii < 12; ii++)
     {
         for (int jj = 0; jj < TIME_SAMPLE; jj++)
