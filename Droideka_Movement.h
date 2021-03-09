@@ -25,7 +25,7 @@ public:
     unsigned int nb_iter = TIME_SAMPLE;
     unsigned long start = 0;
     unsigned long time_span = 0;
-    int time_iter[TIME_SAMPLE];
+    unsigned long time_iter[TIME_SAMPLE];
     int leg_id = -1;
     bool next_pos_calc = false;
 
@@ -63,7 +63,7 @@ public:
     Droideka_Position get_future_position(int ii);                                                                                    // Séquence de Droideka_Position.
     Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x, float trans_y, float trans_z, float rot_angle); // Trajectoire du centre de gravité
     Droideka_Position get_future_position(float theta, float rho, float height, int one_leg = -1);                                    // Trajectoire des jambes ou de la jambe spécifiée si leg != -1.
-    Droideka_Position get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, int ii);                            // Marche.
+    Droideka_Position get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, unsigned int ii);                   // Marche.
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement(bool lifting_legs);

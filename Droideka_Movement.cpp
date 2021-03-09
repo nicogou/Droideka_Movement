@@ -29,7 +29,7 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float tr
     start_position = start_position_;
     time_span = span * 1000;
 
-    for (int ii = 0; ii < nb_iter; ii++)
+    for (unsigned int ii = 0; ii < nb_iter; ii++)
     {
         params[0][ii] = trans_x[ii];
         params[1][ii] = trans_y[ii];
@@ -52,7 +52,7 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float th
     leg_id = one_leg;
     time_span = span * 1000;
 
-    for (int ii = 0; ii < nb_iter; ii++)
+    for (unsigned int ii = 0; ii < nb_iter; ii++)
     {
         params[0][ii] = theta[ii];
         params[1][ii] = rho[ii];
@@ -72,7 +72,7 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka
 
     start_position = start_position_;
 
-    for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    for (unsigned int ii = 0; ii < TIME_SAMPLE; ii++)
     {
         for (int jj = 0; jj < 12; jj++)
         {
@@ -108,7 +108,7 @@ void Droideka_Movement::add_position(Droideka_Position start_position_, Droideka
 
 ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
 {
-    for (int ii = 0; ii < nb_iter; ii++)
+    for (unsigned int ii = 0; ii < nb_iter; ii++)
     {
         params[0][ii] = ((float)throttle_lateral - 105.0) * (2.0 - (-2.0)) / (792.0 - 105.0) + -2.0;
         params[1][ii] = ((float)throttle_longitudinal - 831.0) * (2.0 - (-2.0)) / (140.0 - 831.0) + -2.0;
@@ -131,7 +131,7 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
 
 ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, int throttle_lateral)
 {
-    for (int ii = 0; ii < nb_iter; ii++)
+    for (unsigned int ii = 0; ii < nb_iter; ii++)
     {
         // params[1][ii] = 2.0 * ((float)ii + 1.0) / (float)nb_iter;
         // params[0][ii] = -2.0 * sin(2 * 3.141592 * params[1][ii] / 2.0);
@@ -250,7 +250,7 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
     return final_pos;
 }
 
-Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, int ii)
+Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, unsigned int ii)
 {
     float temp[LEG_NB][3];
     unsigned long time_leg_starts_lifting;
@@ -305,7 +305,6 @@ float *Droideka_Movement::get_lifted_position(int leg, Droideka_Position debut_p
 
     // Between the lifting and putting back of the leg, theta and X are linear, wheras Y follows a quadratic curve (arbitrarily defined)
 
-    float temp[LEG_NB][3];
     for (int ii = 0; ii < 2; ii++)
     {
         res[ii] = (fin_pos.legs[leg][ii] - debut_pos.legs[leg][ii]) / interval_time * time_from_lifting + debut_pos.legs[leg][ii];
