@@ -1,6 +1,10 @@
 #include <Droideka_Movement.h>
 
-Droideka_Movement::Droideka_Movement() {}
+Droideka_Movement::Droideka_Movement()
+{
+    Serial.println("void declaration");
+    stable_movement();
+}
 
 Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span, bool lifting_legs)
 {
@@ -312,4 +316,83 @@ float *Droideka_Movement::get_lifted_position(int leg, Droideka_Position debut_p
     res[2] = Y_NOT_TOUCHING - (Y_NOT_TOUCHING - Y_TOUCHING) * ((time_from_lifting - interval_time / 2) / (interval_time / 2)) * ((time_from_lifting - interval_time / 2) / (interval_time / 2));
 
     return res;
+}
+
+void Droideka_Movement::stable_movement()
+{
+    float M[LEG_NB][2];
+    float M_prime[LEG_NB][2];
+    int nb = 5;
+    float cog[LEG_NB + 2][2]; // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
+    float factor = 1 / 3;
+    float deplacement[2]; // {x, y}
+    int index;
+
+    deplacement[0] = 0.0;
+    deplacement[1] = 2.0;
+
+    for (int ii = 0; ii < LEG_NB; ii++)
+    {
+        index = leg_order[ii] - 1;
+        for (int jj = 0; jj < 2; jj++)
+        {
+            M[index][jj] = shoulder_pos[index][jj] + shoulder_mult[index][jj] * start_position.legs[index][1] * cos(PI * start_position.legs[index][0] / 180.0);
+            M_prime[index][jj] = M[index][jj] + deplacement[jj];
+        }
+    }
+
+    // //Block 1
+    // for (int ii = 0; ii < LEG_NB; ii++)
+    // {
+    //     for (int jj = 0; jj < 2; jj++)
+    //     {
+    //         Serial.print(ii);
+    //         Serial.print("\t");
+    //         Serial.print(jj);
+    //         Serial.print("\t\t");
+    //         Serial.print(M[ii][jj]);
+    //         Serial.print("\t\t");
+    //         Serial.print(M_prime[ii][jj]);
+    //         Serial.println();
+    //     }
+    // }
+
+    for (int jj = 0; jj < 2; jj++)
+    {
+        cog[0][jj] = 0.0;
+        //cog[1][jj] = ((float)M[1][jj] + (float)M[2][jj]) / 2 + (float)factor * ((float)M[3][jj] - ((float)M[2][jj] + (float)M[1][jj]) / 2);
+        cog[1][jj] = (M[1][jj] + M[2][jj]) / 2 + factor * (M[3][jj] - (M[2][jj] + M[1][jj]) / 2);
+        cog[2][jj] = (M_prime[0][jj] + M[3][jj]) / 2 + factor * (M[2][jj] - (M_prime[0][jj] + M[3][jj]) / 2);
+        cog[3][jj] = (M_prime[0][jj] + M[3][jj]) / 2 + factor * (M_prime[1][jj] - (M_prime[0][jj] + M[3][jj]) / 2);
+        cog[4][jj] = (M_prime[1][jj] + M_prime[2][jj]) / 2 + factor * (M_prime[0][jj] - (M_prime[2][jj] + M_prime[1][jj]) / 2);
+        cog[5][jj] = deplacement[jj];
+    }
+
+    // // Block 2
+    // for (int ii = 0; ii < nb + 1; ii++)
+    // {
+    //     Serial.print(cog[ii][0]);
+    //     Serial.print("\t");
+    //     Serial.print(cog[ii][1]);
+    //     Serial.println();
+    // }
+
+    // // Block 3
+    // for (int ii = 0; ii < nb; ii++)
+    // {
+    //     for (int jj = ii * TIME_SAMPLE / nb; jj < (ii + 1) * TIME_SAMPLE / nb; jj++)
+    //     {
+    //         params[0][jj] = cog[ii][0] + (cog[ii + 1][0] - cog[ii][0]) * ((float)jj - (float)ii * (float)TIME_SAMPLE / (float)nb) / ((float)TIME_SAMPLE / (float)nb);
+    //         params[1][jj] = cog[ii][1] + (cog[ii + 1][1] - cog[ii][1]) * ((float)jj - (float)ii * (float)TIME_SAMPLE / (float)nb) / ((float)TIME_SAMPLE / (float)nb);
+    //         params[2][jj] = 0;
+    //         params[3][jj] = 0;
+    //     }
+    // }
+
+    // // Block 4
+    // for (int ii = 0; ii < TIME_SAMPLE; ii++)
+    // {
+    //     Serial.print(String(params[0][ii]) + "\t\t");
+    //     Serial.println(params[1][ii]);
+    // }
 }

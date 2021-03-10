@@ -67,6 +67,6 @@ public:
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement(bool lifting_legs);
-    void triangles(int16_t t_long, int16_t t_lat);
+    void stable_movement();
 };
 #endif
