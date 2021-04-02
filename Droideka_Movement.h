@@ -34,8 +34,8 @@ public:
     Droideka_Position end_position;
 
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
-    int8_t moving_leg_nb = 0;
-    unsigned long delta_time;
+    int8_t moving_leg_nb = 4;
+    unsigned long delta_time = nb_iter / (moving_leg_nb * 2);
 
     float params[12][TIME_SAMPLE];
     float reverse_params[12][TIME_SAMPLE];
@@ -67,6 +67,6 @@ public:
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement(bool lifting_legs);
-    void stable_movement();
+    void stable_movement(bool reversed = false);
 };
 #endif
