@@ -127,7 +127,7 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
     leg_order[0] = 4;
 
     moving_leg_nb = 4;
-    delta_time = nb_iter / (moving_leg_nb * 2);
+    // delta_time = nb_iter / (moving_leg_nb * 2);
     // stable_movement();
 
     return NO_ERROR;
@@ -135,17 +135,13 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
 
 ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, int throttle_lateral)
 {
-    for (unsigned int ii = 0; ii < nb_iter; ii++)
-    {
-        time_iter[ii] = (ii + 1) * time_span / nb_iter;
-    }
     leg_order[3] = 1;
     leg_order[1] = 2;
     leg_order[2] = 3;
     leg_order[0] = 4;
 
     moving_leg_nb = 2;
-    delta_time = nb_iter / (moving_leg_nb * 2);
+    // delta_time = nb_iter / (moving_leg_nb * 2);
     stable_movement();
 
     return NO_ERROR;
@@ -256,8 +252,18 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
 
     for (int jj = 0; jj < LEG_NB; jj++)
     {
-        time_leg_starts_lifting = (leg_order[jj] - 1) * nb_iter / (nb) + delta_time;
-        time_leg_touches_ground_again = (leg_order[jj]) * nb_iter / (nb)-1;
+        // time_leg_starts_lifting = (leg_order[jj] - 1) * nb_iter / (nb) + delta_time;
+        // time_leg_touches_ground_again = (leg_order[jj]) * nb_iter / (nb)-1;
+        if (leg_order[jj] == 1 || leg_order[jj] == 2)
+        {
+            time_leg_starts_lifting = sections[2 * (leg_order[jj] - 1) + 1];
+            time_leg_touches_ground_again = sections[2 * (leg_order[jj] - 1) + 2] - 1;
+        }
+        else
+        {
+            time_leg_starts_lifting = nb_iter + 1;
+            time_leg_touches_ground_again = time_leg_starts_lifting;
+        }
 
         if (ii < time_leg_starts_lifting)
         {
@@ -268,37 +274,37 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
         }
         else if (ii >= time_leg_starts_lifting && ii < time_leg_touches_ground_again)
         {
-            if (leg_order[jj] == 1 || leg_order[jj] == 2) // On ne bouge que les deux premières jambes.
+            // if (leg_order[jj] == 1 || leg_order[jj] == 2) // On ne bouge que les deux premières jambes.
+            // {
+            for (int kk = 0; kk < 3; kk++)
             {
-                for (int kk = 0; kk < 3; kk++)
-                {
-                    temp[jj][kk] = get_lifted_position(jj, temp_current_pos, temp_future_pos, ii)[kk];
-                }
+                temp[jj][kk] = get_lifted_position(jj, temp_current_pos, temp_future_pos, ii, time_leg_starts_lifting, time_leg_touches_ground_again)[kk];
             }
-            else
-            {
-                for (int kk = 0; kk < 3; kk++)
-                {
-                    temp[jj][kk] = temp_current_pos.legs[jj][kk];
-                }
-            }
+            // }
+            // else
+            // {
+            // for (int kk = 0; kk < 3; kk++)
+            // {
+            //     temp[jj][kk] = temp_current_pos.legs[jj][kk];
+            // }
+            // }
         }
         else if (ii >= time_leg_touches_ground_again && ii <= nb_iter)
         {
-            if (leg_order[jj] == 1 || leg_order[jj] == 2) // On ne bouge que les deux premières jambes.
+            // if (leg_order[jj] == 1 || leg_order[jj] == 2) // On ne bouge que les deux premières jambes.
+            // {
+            for (int kk = 0; kk < 3; kk++)
             {
-                for (int kk = 0; kk < 3; kk++)
-                {
-                    temp[jj][kk] = temp_future_pos.legs[jj][kk];
-                }
+                temp[jj][kk] = temp_future_pos.legs[jj][kk];
             }
-            else
-            {
-                for (int kk = 0; kk < 3; kk++)
-                {
-                    temp[jj][kk] = temp_current_pos.legs[jj][kk];
-                }
-            }
+            // }
+            // else
+            // {
+            //     for (int kk = 0; kk < 3; kk++)
+            //     {
+            //         temp[jj][kk] = temp_current_pos.legs[jj][kk];
+            //     }
+            // }
         }
     }
     Droideka_Position result = Droideka_Position(temp);
@@ -352,6 +358,7 @@ Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_
                     for (int jj = 0; jj < 3; jj++)
                     {
                         temp[ii][jj] = temp_pos.legs[ii][jj];
+                        // temp[ii][jj] = get_future_position(default_position, params[0][TIME_SAMPLE - 1] / 2.0, params[1][TIME_SAMPLE - 1] / 2.0, params[2][TIME_SAMPLE - 1], params[3][TIME_SAMPLE - 1]).legs[ii][jj];
                     }
                 }
             }
@@ -364,11 +371,13 @@ Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_
     }
 }
 
-float *Droideka_Movement::get_lifted_position(int8_t leg, Droideka_Position debut_pos, Droideka_Position fin_pos, int time_)
+float *Droideka_Movement::get_lifted_position(int8_t leg, Droideka_Position debut_pos, Droideka_Position fin_pos, int time_, int time_start_lifting, int time_end_lifting)
 {
     static float res[3];
-    float debut_time = ((float)leg_order[leg] - 1) * (float)TIME_SAMPLE / ((float)nb) + (float)delta_time;
-    float fin_time = (float)leg_order[leg] * (float)TIME_SAMPLE / ((float)nb) - 1;
+    // float debut_time = ((float)leg_order[leg] - 1) * (float)TIME_SAMPLE / ((float)nb) + (float)delta_time;
+    // float fin_time = (float)leg_order[leg] * (float)TIME_SAMPLE / ((float)nb) - 1;
+    float debut_time = (float)time_start_lifting;
+    float fin_time = (float)time_end_lifting;
     float interval_time = (float)fin_time - (float)debut_time;
     float time_from_lifting = (float)time_ - (float)debut_time;
 
@@ -388,6 +397,8 @@ void Droideka_Movement::stable_movement()
     int8_t index;
     float M_default[LEG_NB][2];
     moving_leg_nb = 2;
+
+    start_position.print_position("Start position");
 
     deplacement[0] = 0.0;
     deplacement[1] = 2.0;
@@ -452,13 +463,49 @@ void Droideka_Movement::stable_movement()
         Serial.println();
     }
 
+    if (seq == STARTING_SEQUENCE)
+    {
+        sections[0] = 0;
+        sections[1] = 1.0 * delta_time + 0.0 * lifting_leg_time;
+        sections[2] = 1.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[3] = 2.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[4] = 2.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[5] = 3.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[6] = sections[5];
+    }
+    else if (seq == FINISHING_SEQUENCE)
+    {
+        sections[0] = 0;
+        sections[1] = 1.0 * delta_time + 0.0 * lifting_leg_time;
+        sections[2] = 1.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[3] = 2.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[4] = 2.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[5] = 3.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[6] = sections[5];
+    }
+    else if (seq == INTERMEDIATE_SEQUENCE)
+    {
+        sections[0] = 0;
+        sections[1] = 1.0 * delta_time + 0.0 * lifting_leg_time;
+        sections[2] = 1.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[3] = 2.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[4] = 2.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[5] = 3.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[6] = sections[5];
+        // nb_iter = sections[6];
+    }
+    for (unsigned int ii = 0; ii < nb_iter; ii++)
+    {
+        time_iter[ii] = (ii + 1) * time_span / nb_iter;
+    }
+
     // Block 3
     for (int8_t ii = 0; ii < nb; ii++)
     {
-        for (int jj = ii * nb_iter / nb; jj < ii * nb_iter / nb + delta_time; jj++)
+        for (int jj = sections[2 * ii]; jj < sections[2 * ii + 1]; jj++)
         {
-            params[0][jj] = cog[ii][0] + (cog[ii + 1][0] - cog[ii][0]) * ((float)jj + 1 - (float)ii * (float)nb_iter / (float)nb) / ((float)delta_time);
-            params[1][jj] = cog[ii][1] + (cog[ii + 1][1] - cog[ii][1]) * ((float)jj + 1 - (float)ii * (float)nb_iter / (float)nb) / ((float)delta_time);
+            params[0][jj] = cog[ii][0] + (cog[ii + 1][0] - cog[ii][0]) * ((float)jj + 1 - (float)sections[2 * ii]) / ((float)sections[2 * ii + 1] - sections[2 * ii]);
+            params[1][jj] = cog[ii][1] + (cog[ii + 1][1] - cog[ii][1]) * ((float)jj + 1 - (float)sections[2 * ii]) / ((float)sections[2 * ii + 1] - sections[2 * ii]);
             params[2][jj] = 0;
             params[3][jj] = 0;
             reverse_params[0][jj] = params[0][jj] - deplacement[0];
@@ -466,14 +513,14 @@ void Droideka_Movement::stable_movement()
             reverse_params[2][jj] = 0;
             reverse_params[3][jj] = 0;
         }
-        for (int jj = ii * nb_iter / nb + delta_time; jj < (ii + 1) * nb_iter / nb; jj++)
+        for (int jj = sections[2 * ii + 1]; jj < sections[2 * (ii + 1)]; jj++)
         {
-            params[0][jj] = params[0][ii * nb_iter / nb + delta_time - 1];
-            params[1][jj] = params[1][ii * nb_iter / nb + delta_time - 1];
+            params[0][jj] = params[0][sections[2 * ii + 1] - 1];
+            params[1][jj] = params[1][sections[2 * ii + 1] - 1];
             params[2][jj] = 0;
             params[3][jj] = 0;
-            reverse_params[0][jj] = reverse_params[0][ii * nb_iter / nb + delta_time - 1];
-            reverse_params[1][jj] = reverse_params[1][ii * nb_iter / nb + delta_time - 1];
+            reverse_params[0][jj] = reverse_params[0][sections[2 * ii + 1] - 1];
+            reverse_params[1][jj] = reverse_params[1][sections[2 * ii + 1] - 1];
             reverse_params[2][jj] = 0;
             reverse_params[3][jj] = 0;
         }
@@ -501,6 +548,8 @@ void Droideka_Movement::keep_going()
         seq = next_seq;
         next_seq = STARTING_SEQUENCE;
         start_position = end_position;
+        iter = 0;
+        start = 0;
         for (int ii = 0; ii < LEG_NB; ii++)
         {
             leg_order[ii] = leg_order[ii] - 2;

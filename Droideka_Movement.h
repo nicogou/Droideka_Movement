@@ -46,6 +46,7 @@ public:
     float cog[NB + 1][2];     // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
     float factor = 1.0 / 9.0; // 1/10 avait marché lors d'essais préliminaires.
     float deplacement[2];     // {x, y}
+    int sections[2 * NB + 1];
 
     float default_pos[LEG_NB][3] = {
         {THETA_IDLE, X_IDLE, Y_TOUCHING},
@@ -63,7 +64,8 @@ public:
 
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
     int8_t moving_leg_nb = 2;
-    unsigned long delta_time = nb_iter / (moving_leg_nb * 2);
+    unsigned long delta_time = 8;
+    unsigned long lifting_leg_time = 4 * delta_time;
 
     float params[12][TIME_SAMPLE];
     float reverse_params[12][TIME_SAMPLE];
@@ -93,7 +95,7 @@ public:
     Droideka_Position get_future_position(float theta, float rho, float height, int8_t one_leg = -1);                                 // Trajectoire des jambes ou de la jambe spécifiée si leg != -1.
     Droideka_Position get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, unsigned int ii);                   // Marche.
     Droideka_Position get_final_position(Droideka_Position start_pos);
-    float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
+    float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_, int time_start_lifting, int time_end_lifting);
     ErrorCode establish_legs_movement(bool lifting_legs);
     void stable_movement();
     void keep_going();
