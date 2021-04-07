@@ -8,12 +8,22 @@ enum Movement_Type
 };
 typedef enum Movement_Type Movement_Type;
 
+enum MovementSequence
+{
+    STARTING_SEQUENCE = 0,
+    INTERMEDIATE_SEQUENCE = 1,
+    FINISHING_SEQUENCE = 2,
+};
+typedef enum MovementSequence MovementSequence;
+
 #ifndef Droideka_Movement_h
 #define Droideka_Movement_h
 
 #include <Droideka_Position.h>
 #include "../Droideka/utils/structs.h"
 #include <Arduino.h>
+
+#define NB 3
 
 class Droideka_Movement
 {
@@ -29,12 +39,30 @@ public:
     int8_t leg_id = -1;
     bool next_pos_calc = false;
 
+    float M[LEG_NB][2];
+    float M_prime[LEG_NB][2];
+    // int8_t nb = 5;
+    int8_t nb = NB;
+    float cog[NB + 1][2];     // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
+    float factor = 1.0 / 9.0; // 1/10 avait marché lors d'essais préliminaires.
+    float deplacement[2];     // {x, y}
+
+    float default_pos[LEG_NB][3] = {
+        {THETA_IDLE, X_IDLE, Y_TOUCHING},
+        {THETA_IDLE, X_IDLE, Y_TOUCHING},
+        {THETA_IDLE, X_IDLE, Y_TOUCHING},
+        {THETA_IDLE, X_IDLE, Y_TOUCHING}};
+    Droideka_Position default_position = Droideka_Position(default_pos);
+
     Droideka_Position start_position;
     Droideka_Position next_position;
     Droideka_Position end_position;
 
+    MovementSequence seq = STARTING_SEQUENCE;
+    MovementSequence next_seq = STARTING_SEQUENCE;
+
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
-    int8_t moving_leg_nb = 4;
+    int8_t moving_leg_nb = 2;
     unsigned long delta_time = nb_iter / (moving_leg_nb * 2);
 
     float params[12][TIME_SAMPLE];
@@ -67,6 +95,7 @@ public:
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_);
     ErrorCode establish_legs_movement(bool lifting_legs);
-    void stable_movement(bool reversed = false);
+    void stable_movement();
+    void keep_going();
 };
 #endif
