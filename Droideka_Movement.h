@@ -31,6 +31,7 @@ public:
     Movement_Type type = UNSPECIFIED;
     bool started = false;
     bool finished = false;
+    bool paused = false;
     unsigned int iter = 0;
     unsigned int nb_iter = TIME_SAMPLE;
     unsigned long start = 0;
