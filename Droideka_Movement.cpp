@@ -623,26 +623,31 @@ void Droideka_Movement::stable_movement()
 
 void Droideka_Movement::keep_going()
 {
-    if (next_seq == INTERMEDIATE_SEQUENCE || next_seq == FINISHING_SEQUENCE)
+    if (seq == STARTING_SEQUENCE || seq == INTERMEDIATE_SEQUENCE)
     {
-        Serial.println("Keep going!");
-        started = false;
-        finished = false;
-        seq = next_seq;
-        next_seq = STARTING_SEQUENCE;
-        start_position = end_position;
-        iter = 0;
-        start = 0;
-        for (int ii = 0; ii < LEG_NB; ii++)
+        if (next_seq == INTERMEDIATE_SEQUENCE || next_seq == FINISHING_SEQUENCE)
         {
-            leg_order[ii] = leg_order[ii] - 2;
-            if (leg_order[ii] <= 0)
+            Serial.println("Keep going!");
+            deplacement[0] *= 2; // When the STARTING_SEQ is established, the deplacement values are divided by 2 in stable_movement (for a specific reason not detailed here). They are again divided by 2 when FINISHING_SEQ is established.
+            deplacement[1] *= 2; // We thus need to compensate for the first division here.
+            started = false;
+            finished = false;
+            seq = next_seq;
+            next_seq = STARTING_SEQUENCE;
+            start_position = end_position;
+            iter = 0;
+            start = 0;
+            for (int ii = 0; ii < LEG_NB; ii++)
             {
-                leg_order[ii] += 4;
+                leg_order[ii] = leg_order[ii] - 2;
+                if (leg_order[ii] <= 0)
+                {
+                    leg_order[ii] += 4;
+                }
             }
+            stable_movement();
+            end_position = get_final_position(start_position);
+            end_position.print_position("End Position keep going");
         }
-        stable_movement();
-        end_position = get_final_position(start_position);
-        end_position.print_position("End Position keep going");
     }
 }
