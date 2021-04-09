@@ -18,11 +18,10 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t 
     else
     {
         type = ROBOT_TRAJ;
-        establish_cog_movement(0, 0);
+        establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_angle);
         end_position = get_final_position(start_position);
         end_position.print_position("End position");
     }
-    //establish_legs_movement(lifting_legs);
 }
 
 Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span)
@@ -133,18 +132,102 @@ ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudina
     return NO_ERROR;
 }
 
-ErrorCode Droideka_Movement::establish_cog_movement(int throttle_longitudinal, int throttle_lateral)
+ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal_zeroed, int16_t throttle_lateral_zeroed, int16_t throttle_angle_zeroed)
 {
-    leg_order[3] = 1;
-    leg_order[1] = 2;
-    leg_order[2] = 3;
-    leg_order[0] = 4;
+    establish_deplacement(throttle_longitudinal_zeroed, throttle_lateral_zeroed, throttle_angle_zeroed);
+    Serial.print("Deplacement X : ");
+    Serial.print(deplacement[0]);
+    Serial.print("\t Deplacement Y : ");
+    Serial.println(deplacement[1]);
+    Serial.print("Direction : ");
+    Serial.println(direction * 180 / 3.141592);
+    establish_legs_order(direction);
 
     moving_leg_nb = 2;
-    // delta_time = nb_iter / (moving_leg_nb * 2);
     stable_movement();
 
     return NO_ERROR;
+}
+
+void Droideka_Movement::establish_deplacement(int16_t throttle_longitudinal_zeroed, int16_t throttle_lateral_zeroed, int16_t throttle_angle_zeroed)
+{
+    if (throttle_lateral_zeroed == 0 && throttle_longitudinal_zeroed >= 0)
+    {
+        direction = 3.141592 / 2;
+    }
+    else if (throttle_lateral_zeroed == 0 && throttle_longitudinal_zeroed < 0)
+    {
+        direction = -3.141592 / 2;
+    }
+    else
+    {
+        direction = atan2((float)throttle_longitudinal_zeroed, (float)throttle_lateral_zeroed);
+    }
+    deplacement[0] = 2.0 * cos(direction);
+    deplacement[1] = 2.0 * sin(direction);
+}
+
+ErrorCode Droideka_Movement::establish_legs_order(float direction)
+{
+    float pi = 3.141592;
+    float pi2 = pi / 2;
+    float pi4 = pi / 4;
+    if (direction >= 0 && direction < pi4)
+    {
+        leg_order[2] = 1;
+        leg_order[3] = 2;
+        leg_order[0] = 3;
+        leg_order[1] = 4;
+    }
+    else if (direction >= pi4 && direction < pi2)
+    {
+        leg_order[2] = 1;
+        leg_order[0] = 2;
+        leg_order[3] = 3;
+        leg_order[1] = 4;
+    }
+    else if (direction >= pi2 && direction < 3 * pi4)
+    {
+        leg_order[3] = 1;
+        leg_order[1] = 2;
+        leg_order[2] = 3;
+        leg_order[0] = 4;
+    }
+    else if (direction >= 3 * pi4 && direction < pi)
+    {
+        leg_order[3] = 1;
+        leg_order[2] = 2;
+        leg_order[1] = 3;
+        leg_order[0] = 4;
+    }
+    else if (direction >= -pi4 && direction < 0)
+    {
+        leg_order[0] = 1;
+        leg_order[1] = 2;
+        leg_order[2] = 3;
+        leg_order[3] = 4;
+    }
+    else if (direction >= -pi2 && direction < -pi4)
+    {
+        leg_order[0] = 1;
+        leg_order[2] = 2;
+        leg_order[1] = 3;
+        leg_order[3] = 4;
+    }
+    else if (direction >= -3 * pi4 && direction < -pi2)
+    {
+        leg_order[1] = 1;
+        leg_order[3] = 2;
+        leg_order[0] = 3;
+        leg_order[2] = 4;
+    }
+    else if (direction >= -pi && direction < -3 * pi4)
+    {
+        leg_order[1] = 1;
+        leg_order[0] = 2;
+        leg_order[3] = 3;
+        leg_order[2] = 4;
+    }
 }
 
 Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, int ii)
@@ -400,8 +483,8 @@ void Droideka_Movement::stable_movement()
 
     start_position.print_position("Start position");
 
-    deplacement[0] = 0.0;
-    deplacement[1] = 2.0;
+    // deplacement[0] = 0.0;
+    // deplacement[1] = 2.0;
     if (seq == INTERMEDIATE_SEQUENCE)
     {
     }
