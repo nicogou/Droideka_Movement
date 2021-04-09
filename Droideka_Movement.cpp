@@ -628,8 +628,11 @@ void Droideka_Movement::keep_going()
         if (next_seq == INTERMEDIATE_SEQUENCE || next_seq == FINISHING_SEQUENCE)
         {
             Serial.println("Keep going!");
-            deplacement[0] *= 2; // When the STARTING_SEQ is established, the deplacement values are divided by 2 in stable_movement (for a specific reason not detailed here). They are again divided by 2 when FINISHING_SEQ is established.
-            deplacement[1] *= 2; // We thus need to compensate for the first division here.
+            if (seq == STARTING_SEQUENCE)
+            {
+                deplacement[0] *= 2; // When the STARTING_SEQ is established, the deplacement values are divided by 2 in stable_movement (for a specific reason not detailed here). They are again divided by 2 when FINISHING_SEQ is established.
+                deplacement[1] *= 2; // We thus need to compensate for the first division here.
+            }
             started = false;
             finished = false;
             seq = next_seq;
