@@ -165,6 +165,12 @@ void Droideka_Movement::establish_deplacement(int16_t throttle_longitudinal_zero
     }
     deplacement[0] = 2.0 * cos(direction);
     deplacement[1] = 2.0 * sin(direction);
+    longitudinal = throttle_longitudinal_zeroed;
+    lateral = throttle_lateral_zeroed;
+    angle = throttle_angle_zeroed;
+    next_longitudinal = throttle_longitudinal_zeroed;
+    next_lateral = throttle_lateral_zeroed;
+    next_angle = throttle_angle_zeroed;
 }
 
 ErrorCode Droideka_Movement::establish_legs_order(float direction)
@@ -621,6 +627,32 @@ void Droideka_Movement::stable_movement()
     }
 }
 
+bool Droideka_Movement::compare_directions()
+{
+    float pi = 3.141592;
+    float pi2 = pi / 2;
+    float pi4 = pi / 4;
+    float limits[8][2] = {{pi, 3.0 * pi4},
+                          {3.0 * pi4, pi2},
+                          {pi2, pi4},
+                          {pi4, 0.0},
+                          {0.0, -pi4},
+                          {-pi4, -pi2},
+                          {pi2, -3.0 * pi4},
+                          {-3.0 * pi4, -pi}};
+    for (int ii = 0; ii < 8; ii++)
+    {
+        if (direction >= limits[ii][1] && direction < limits[ii][0])
+        {
+            if (last_direction >= limits[ii][1] && last_direction < limits[ii][0])
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Droideka_Movement::keep_going()
 {
     if (seq == STARTING_SEQUENCE || seq == INTERMEDIATE_SEQUENCE)
@@ -628,10 +660,38 @@ void Droideka_Movement::keep_going()
         if (next_seq == INTERMEDIATE_SEQUENCE || next_seq == FINISHING_SEQUENCE)
         {
             Serial.println("Keep going!");
-            if (seq == STARTING_SEQUENCE)
+            if (next_seq == FINISHING_SEQUENCE)
             {
-                deplacement[0] *= 2; // When the STARTING_SEQ is established, the deplacement values are divided by 2 in stable_movement (for a specific reason not detailed here). They are again divided by 2 when FINISHING_SEQ is established.
-                deplacement[1] *= 2; // We thus need to compensate for the first division here.
+                next_longitudinal = longitudinal;
+                next_lateral = lateral;
+                next_angle = angle;
+            }
+            Serial.print("Next long : ");
+            Serial.print(next_longitudinal);
+            Serial.print("\tNext lat : ");
+            Serial.print(next_lateral);
+            Serial.print("\tNext ang : ");
+            Serial.println(next_angle);
+            last_direction = direction;
+            establish_deplacement(next_longitudinal, next_lateral, next_angle);
+            Serial.print("Next dep X : ");
+            Serial.print(deplacement[0]);
+            Serial.print("\tNext dep Y : ");
+            Serial.println(deplacement[1]);
+            if (compare_directions() == true)
+            {
+                for (int ii = 0; ii < LEG_NB; ii++)
+                {
+                    leg_order[ii] = leg_order[ii] - 2;
+                    if (leg_order[ii] <= 0)
+                    {
+                        leg_order[ii] += 4;
+                    }
+                }
+            }
+            else
+            {
+                establish_legs_order(direction);
             }
             started = false;
             finished = false;
@@ -640,14 +700,7 @@ void Droideka_Movement::keep_going()
             start_position = end_position;
             iter = 0;
             start = 0;
-            for (int ii = 0; ii < LEG_NB; ii++)
-            {
-                leg_order[ii] = leg_order[ii] - 2;
-                if (leg_order[ii] <= 0)
-                {
-                    leg_order[ii] += 4;
-                }
-            }
+
             stable_movement();
             end_position = get_final_position(start_position);
             end_position.print_position("End Position keep going");
