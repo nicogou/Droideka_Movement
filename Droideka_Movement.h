@@ -49,12 +49,14 @@ public:
     float deplacement[2];     // {x, y}
     float direction;
     float last_direction = 0;
-    int16_t next_longitudinal = 0;
-    int16_t next_lateral = 0;
-    int16_t next_angle = 0;
-    int16_t longitudinal = 0;
-    int16_t lateral = 0;
-    int16_t angle = 0;
+    float rotation;
+    float last_rotation;
+    float next_longitudinal = 0;
+    float next_lateral = 0;
+    float next_angle = 0;
+    float longitudinal = 0;
+    float lateral = 0;
+    float angle = 0;
     int sections[2 * NB + 1];
 
     float default_pos[LEG_NB][3] = {
@@ -94,9 +96,10 @@ public:
     Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span);
     Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int8_t one_leg = -1);
     Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span, int8_t one_leg = -1);
-    Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span, bool lifting_legs);
+    Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span);
+    Droideka_Movement(Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span);
     void add_position(Droideka_Position start_position_, Droideka_Position pos, unsigned long span, int8_t one_leg = -1);
-    ErrorCode establish_cog_movement(int16_t throttle_longitudinal_zeroed, int16_t throttle_lateral_zeroed, int16_t throttle_angle_zeroed);
+    ErrorCode establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
     ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
     Droideka_Position get_future_position(Droideka_Position start_pos, int ii);                                                       // Fonction générale appelée par la classe Droideka en fonction du mouvement.
     Droideka_Position get_future_position(int ii);                                                                                    // Séquence de Droideka_Position.
@@ -107,7 +110,7 @@ public:
     float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_, int time_start_lifting, int time_end_lifting);
     ErrorCode establish_legs_order(float direction);
     bool compare_directions();
-    void establish_deplacement(int16_t throttle_longitudinal_zeroed, int16_t throttle_lateral_zeroed, int16_t throttle_angle_zeroed);
+    void establish_deplacement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
     void stable_movement();
     void keep_going();
 };
