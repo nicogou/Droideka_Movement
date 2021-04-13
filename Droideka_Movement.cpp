@@ -162,7 +162,7 @@ void Droideka_Movement::establish_deplacement(float throttle_longitudinal_zeroed
     }
     else
     {
-        direction = atan2((float)throttle_longitudinal_zeroed, (float)throttle_lateral_zeroed);
+        direction = atan2(throttle_longitudinal_zeroed, throttle_lateral_zeroed);
     }
     deplacement[0] = 2.0 * max(throttle_longitudinal_zeroed, throttle_lateral_zeroed) * cos(direction);
     deplacement[1] = 2.0 * max(throttle_longitudinal_zeroed, throttle_lateral_zeroed) * sin(direction);
@@ -307,8 +307,8 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
         feet_start[ii][0] = shoulder_mult[ii][0] * (start_pos.legs[ii][1] * cos(PI * start_pos.legs[ii][0] / 180));
         feet_start[ii][1] = shoulder_mult[ii][1] * (start_pos.legs[ii][1] * sin(PI * start_pos.legs[ii][0] / 180));
 
-        temp[ii][0] = (feet_start[ii][0] - temp_trans[ii][0]) * cos(PI * rot_angle / 180) + (feet_start[ii][1] - temp_trans[ii][1]) * sin(PI * rot_angle / 180);
-        temp[ii][1] = (feet_start[ii][1] - temp_trans[ii][1]) * cos(PI * rot_angle / 180) - (feet_start[ii][0] - temp_trans[ii][0]) * sin(PI * rot_angle / 180);
+        temp[ii][0] = shoulder_mult[ii][0] * ((feet_start[ii][0] - temp_trans[ii][0]) * cos(PI * rot_angle / 180) + (feet_start[ii][1] - temp_trans[ii][1]) * sin(PI * rot_angle / 180));
+        temp[ii][1] = shoulder_mult[ii][1] * ((feet_start[ii][1] - temp_trans[ii][1]) * cos(PI * rot_angle / 180) - (feet_start[ii][0] - temp_trans[ii][0]) * sin(PI * rot_angle / 180));
 
         temp_final_pos[ii][2] = start_pos.legs[ii][2] + trans_z;
         temp_final_pos[ii][1] = sqrt(temp[ii][0] * temp[ii][0] + temp[ii][1] * temp[ii][1]);
@@ -322,7 +322,7 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
         }
         else
         {
-            temp_final_pos[ii][0] = shoulder_mult[ii][0] * shoulder_mult[ii][1] * 180 * atan(temp[ii][1] / temp[ii][0]) / PI; // Dans le cas général, tan(theta) = y/x.
+            temp_final_pos[ii][0] = 180 * atan(temp[ii][1] / temp[ii][0]) / PI; // Dans le cas général, tan(theta) = y/x.
         }
     }
     Droideka_Position final_pos(temp_final_pos);
@@ -380,6 +380,7 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
 Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_pos)
 {
     float temp[LEG_NB][3];
+    float temp_params[4];
     Droideka_Position temp_pos = get_future_position(start_pos, params[0][TIME_SAMPLE - 1], params[1][TIME_SAMPLE - 1], params[2][TIME_SAMPLE - 1], params[3][TIME_SAMPLE - 1]);
     if (type != ROBOT_TRAJ)
     {
@@ -389,13 +390,17 @@ Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_
     {
         if (seq == STARTING_SEQUENCE)
         {
+            temp_params[0] = -params[0][TIME_SAMPLE - 1] * cos(PI * params[3][TIME_SAMPLE - 1] / 180) - params[1][TIME_SAMPLE - 1] * sin(PI * params[3][TIME_SAMPLE - 1] / 180);
+            temp_params[1] = params[0][TIME_SAMPLE - 1] * sin(PI * params[3][TIME_SAMPLE - 1] / 180) - params[1][TIME_SAMPLE - 1] * cos(PI * params[3][TIME_SAMPLE - 1] / 180);
+            temp_params[2] = -params[2][TIME_SAMPLE - 1];
+            temp_params[3] = -params[3][TIME_SAMPLE - 1];
             for (int ii = 0; ii < LEG_NB; ii++)
             {
                 if (leg_order[ii] == 1 || leg_order[ii] == 2) // On ne bouge que les deux premières jambes.
                 {
                     for (int jj = 0; jj < 3; jj++)
                     {
-                        temp[ii][jj] = get_future_position(default_position, -params[0][TIME_SAMPLE - 1], -params[1][TIME_SAMPLE - 1], -params[2][TIME_SAMPLE - 1], -params[3][TIME_SAMPLE - 1]).legs[ii][jj];
+                        temp[ii][jj] = get_future_position(default_position, temp_params[0], temp_params[1], temp_params[2], temp_params[3]).legs[ii][jj];
                     }
                 }
                 else
@@ -410,13 +415,17 @@ Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_
         }
         if (seq == INTERMEDIATE_SEQUENCE)
         {
+            temp_params[0] = -params[0][TIME_SAMPLE - 1] / 2.0 * cos(PI * params[3][TIME_SAMPLE - 1] / 2.0 / 180) - params[1][TIME_SAMPLE - 1] / 2.0 * sin(PI * params[3][TIME_SAMPLE - 1] / 2.0 / 180);
+            temp_params[1] = params[0][TIME_SAMPLE - 1] / 2.0 * sin(PI * params[3][TIME_SAMPLE - 1] / 2.0 / 180) - params[1][TIME_SAMPLE - 1] / 2.0 * cos(PI * params[3][TIME_SAMPLE - 1] / 2.0 / 180);
+            temp_params[2] = -params[2][TIME_SAMPLE - 1] / 2.0;
+            temp_params[3] = -params[3][TIME_SAMPLE - 1] / 2.0;
             for (int ii = 0; ii < LEG_NB; ii++)
             {
                 if (leg_order[ii] == 1 || leg_order[ii] == 2) // On ne bouge que les deux premières jambes.
                 {
                     for (int jj = 0; jj < 3; jj++)
                     {
-                        temp[ii][jj] = get_future_position(default_position, -params[0][TIME_SAMPLE - 1] / 2.0, -params[1][TIME_SAMPLE - 1] / 2.0, -params[2][TIME_SAMPLE - 1], -params[3][TIME_SAMPLE - 1] / 2.0).legs[ii][jj];
+                        temp[ii][jj] = get_future_position(default_position, temp_params[0], temp_params[1], temp_params[2], temp_params[3]).legs[ii][jj];
                     }
                 }
                 else
@@ -661,6 +670,8 @@ void Droideka_Movement::keep_going()
             Serial.print(deplacement[1]);
             Serial.print("\tNext rot : ");
             Serial.println(rotation);
+            Serial.print("Next Direction : ");
+            Serial.println(direction * 180 / PI);
             if (compare_directions() == true)
             {
                 for (int ii = 0; ii < LEG_NB; ii++)
