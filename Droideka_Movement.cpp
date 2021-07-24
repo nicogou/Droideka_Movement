@@ -164,8 +164,8 @@ void Droideka_Movement::establish_deplacement(float throttle_longitudinal_zeroed
     {
         direction = atan2(throttle_longitudinal_zeroed, throttle_lateral_zeroed);
     }
-    deplacement[0] = 2.0 * max(throttle_longitudinal_zeroed, throttle_lateral_zeroed) * cos(direction);
-    deplacement[1] = 2.0 * max(throttle_longitudinal_zeroed, throttle_lateral_zeroed) * sin(direction);
+    deplacement[0] = 2.0 * max(abs(throttle_longitudinal_zeroed), throttle_lateral_zeroed) * cos(direction);
+    deplacement[1] = 2.0 * max(abs(throttle_longitudinal_zeroed), throttle_lateral_zeroed) * sin(direction);
     rotation = throttle_angle_zeroed * 10.0; // en degrés.
     longitudinal = throttle_longitudinal_zeroed;
     lateral = throttle_lateral_zeroed;
