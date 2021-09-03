@@ -45,7 +45,7 @@ public:
     // int8_t nb = 5;
     int8_t nb = NB;
     float cog[NB + 1][2];     // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
-    float factor = 1.0 / 7.0; // 1/10 avait marché lors d'essais préliminaires.
+    float factor = 1.0 / 5.0; // 1/10 avait marché lors d'essais préliminaires.
     float deplacement[2];     // {x, y}
     float direction;
     float last_direction = 0;

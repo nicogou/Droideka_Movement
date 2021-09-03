@@ -142,6 +142,8 @@ ErrorCode Droideka_Movement::establish_cog_movement(float throttle_longitudinal_
     Serial.println(deplacement[1]);
     Serial.print("Direction : ");
     Serial.println(direction * 180 / PI);
+    Serial.print("Rotation : ");
+    Serial.println(rotation);
     establish_legs_order(direction);
 
     moving_leg_nb = 2;
@@ -197,6 +199,13 @@ ErrorCode Droideka_Movement::establish_legs_order(float direction)
         leg_order[1] = 2;
         leg_order[2] = 3;
         leg_order[0] = 4;
+        if (rotation > 0)
+        {
+            leg_order[2] = 1;
+            leg_order[0] = 2;
+            leg_order[3] = 3;
+            leg_order[1] = 4;
+        }
     }
     else if (direction >= 3 * PI / 4 && direction < PI)
     {
@@ -527,6 +536,7 @@ void Droideka_Movement::stable_movement()
     }
 
     // Block 2
+    Serial.println("COG coordinates");
     for (int8_t ii = 0; ii < nb + 1; ii++)
     {
         Serial.print(cog[ii][0]);
