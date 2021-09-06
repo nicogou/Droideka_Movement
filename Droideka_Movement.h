@@ -57,7 +57,7 @@ public:
     float longitudinal = 0;
     float lateral = 0;
     float angle = 0;
-    int sections[2 * NB + 1];
+    int sections[3 * NB + 1];
 
     float default_pos[LEG_NB][3] = {
         {THETA_IDLE, X_IDLE, Y_TOUCHING},
@@ -75,8 +75,8 @@ public:
 
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
     int8_t moving_leg_nb = 2;
-    unsigned long delta_time = 8;
-    unsigned long lifting_leg_time = 4 * delta_time;
+    unsigned long delta_time = 28;
+    unsigned long lifting_leg_time = 14; //1 * delta_time;
 
     float params[12][TIME_SAMPLE];
     float reverse_params[12][TIME_SAMPLE];
@@ -113,5 +113,6 @@ public:
     void establish_deplacement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
     void stable_movement();
     void keep_going();
+    float P(int n, float t);
 };
 #endif
