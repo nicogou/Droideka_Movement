@@ -57,7 +57,7 @@ public:
     float longitudinal = 0;
     float lateral = 0;
     float angle = 0;
-    int sections[4 * NB];
+    int sections[3 * NB + 1];
 
     float default_pos[LEG_NB][3] = {
         {THETA_IDLE, X_IDLE, Y_TOUCHING},
@@ -113,5 +113,6 @@ public:
     void establish_deplacement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
     void stable_movement();
     void keep_going();
+    float P(int n, float t);
 };
 #endif

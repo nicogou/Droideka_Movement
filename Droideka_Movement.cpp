@@ -351,8 +351,8 @@ Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start
     {
         if (leg_order[jj] == 1 || leg_order[jj] == 2)
         {
-            time_leg_starts_lifting = sections[2 * (leg_order[jj] - 1) + 1];
-            time_leg_touches_ground_again = sections[2 * (leg_order[jj] - 1) + 2] - 1;
+            time_leg_starts_lifting = sections[3 * (leg_order[jj] - 1) + 2];
+            time_leg_touches_ground_again = sections[3 * (leg_order[jj] - 1 + 1) + 1] - 1;
         }
         else
         {
@@ -547,65 +547,60 @@ void Droideka_Movement::stable_movement()
 
     if (seq == STARTING_SEQUENCE)
     {
-        sections[0] = 0;                                         // Start of the move -> the COG goes to the first asked COG position
-        sections[1] = 1.0 * delta_time + 0.0 * lifting_leg_time; // At this moment, the COG has reached the first position and the leg will start lifting
-        sections[2] = 1.0 * delta_time + 1.0 * lifting_leg_time; // At this moment, the leg is put back on the ground and the COG moves to the second position
-        sections[3] = 2.0 * delta_time + 1.0 * lifting_leg_time; // The COG has reached the second position and the leg will start lifting
-        sections[4] = 2.0 * delta_time + 2.0 * lifting_leg_time; // The leg is put back on the ground again, and the COG moves to the third position
-        sections[5] = 2.5 * delta_time + 2.0 * lifting_leg_time; // The COG has reached the third and last position of the movement.
-        sections[6] = sections[5];                               // Needed for calculation?
+        sections[0] = 0;
+        sections[1] = sections[0];
+        sections[2] = 1.0 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = 1.0 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = 1.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = 2.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = 2.0 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = 2.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[9] = sections[8];
     }
     else if (seq == FINISHING_SEQUENCE)
     {
         sections[0] = 0;
-        sections[1] = 0.5 * delta_time + 0.0 * lifting_leg_time;
-        sections[2] = 0.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[3] = 1.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[4] = 1.5 * delta_time + 2.0 * lifting_leg_time;
-        sections[5] = 2.5 * delta_time + 2.0 * lifting_leg_time;
-        sections[6] = sections[5];
+        sections[1] = sections[0];
+        sections[2] = 0.5 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = 0.5 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = 0.5 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = 1.5 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = 1.5 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = 1.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[9] = sections[8];
     }
     else if (seq == INTERMEDIATE_SEQUENCE)
     {
         sections[0] = 0;
-        sections[1] = 0.5 * delta_time + 0.0 * lifting_leg_time;
-        sections[2] = 0.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[3] = 2.0 * delta_time + 1.0 * lifting_leg_time;
-        sections[4] = 2.0 * delta_time + 2.0 * lifting_leg_time;
-        sections[5] = 2.5 * delta_time + 2.0 * lifting_leg_time;
-        sections[6] = sections[5];
-        // nb_iter = sections[6];
+        sections[1] = sections[0];
+        sections[2] = 0.5 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = 0.5 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = 0.5 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = 2.0 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = 2.0 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = 2.0 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[9] = sections[8];
     }
     for (unsigned int ii = 0; ii < nb_iter; ii++)
     {
         time_iter[ii] = (ii + 1) * time_span / nb_iter;
     }
 
-    // Block 3
-    for (int8_t ii = 0; ii < nb; ii++)
+    float t;
+    for (int jj = sections[0]; jj < sections[9]; jj++)
     {
-        for (int jj = sections[2 * ii]; jj < sections[2 * ii + 1]; jj++)
-        {
-            params[0][jj] = cog[ii][0] + (cog[ii + 1][0] - cog[ii][0]) * ((float)jj + 1 - (float)sections[2 * ii]) / ((float)sections[2 * ii + 1] - sections[2 * ii]);
-            params[1][jj] = cog[ii][1] + (cog[ii + 1][1] - cog[ii][1]) * ((float)jj + 1 - (float)sections[2 * ii]) / ((float)sections[2 * ii + 1] - sections[2 * ii]);
-            params[2][jj] = 0;
-            params[3][jj] = ii * rotation / nb + ((ii + 1) * rotation / nb - ii * rotation / nb) * ((float)jj + 1 - (float)sections[2 * ii]) / ((float)sections[2 * ii + 1] - sections[2 * ii]);
-            reverse_params[0][jj] = params[0][jj] - deplacement[0];
-            reverse_params[1][jj] = params[1][jj] - deplacement[1];
-            reverse_params[2][jj] = 0;
-            reverse_params[3][jj] = params[3][jj] - rotation;
-        }
-        for (int jj = sections[2 * ii + 1]; jj < sections[2 * (ii + 1)]; jj++)
-        {
-            params[0][jj] = params[0][sections[2 * ii + 1] - 1];
-            params[1][jj] = params[1][sections[2 * ii + 1] - 1];
-            params[2][jj] = 0;
-            params[3][jj] = params[3][sections[2 * ii + 1] - 1];
-            reverse_params[0][jj] = reverse_params[0][sections[2 * ii + 1] - 1];
-            reverse_params[1][jj] = reverse_params[1][sections[2 * ii + 1] - 1];
-            reverse_params[2][jj] = 0;
-            reverse_params[3][jj] = reverse_params[3][sections[2 * ii + 1] - 1];
-        }
+        t = 3.0 * ((float)jj + 1.0) / ((float)TIME_SAMPLE) + 1.0;
+        params[0][jj] = cog[0][0] * P(1, t) + cog[1][0] * P(2, t) + cog[2][0] * P(3, t) + cog[3][0] * P(4, t);
+        params[1][jj] = cog[0][1] * P(1, t) + cog[1][1] * P(2, t) + cog[2][1] * P(3, t) + cog[3][1] * P(4, t);
+        params[2][jj] = 0;
+        params[3][jj] = rotation * ((float)jj + 1) / ((float)sections[9]);
+        reverse_params[0][jj] = params[0][jj] - deplacement[0];
+        reverse_params[1][jj] = params[1][jj] - deplacement[1];
+        reverse_params[2][jj] = 0;
+        reverse_params[3][jj] = params[3][jj] - rotation;
     }
 
     for (int8_t ii = 0; ii < nb_iter; ii++)
@@ -622,6 +617,45 @@ void Droideka_Movement::stable_movement()
         Serial.print("\t\t");
         Serial.println(reverse_params[3][ii]);
     }
+}
+
+float Droideka_Movement::P(int n, float t)
+{
+    float t1, t2, t3, div;
+    switch (n)
+    {
+    case 1:
+        t1 = 2.0;
+        t2 = 3.0;
+        t3 = 4.0;
+        div = -1.0 / 6.0;
+        break;
+    case 2:
+        t1 = 1.0;
+        t2 = 3.0;
+        t3 = 4.0;
+        div = 1.0 / 2.0;
+        break;
+    case 3:
+        t1 = 1.0;
+        t2 = 2.0;
+        t3 = 4.0;
+        div = -1.0 / 2.0;
+        break;
+    case 4:
+        t1 = 1.0;
+        t2 = 2.0;
+        t3 = 3.0;
+        div = 1.0 / 6.0;
+        break;
+    default:
+        Serial.println("ERROR: " + String(n) + " is not equal to 1, 2, 3 or 4!!!");
+        while (true)
+        {
+        }
+        break;
+    }
+    return div * (t - t1) * (t - t2) * (t - t3);
 }
 
 bool Droideka_Movement::compare_directions()
