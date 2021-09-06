@@ -535,6 +535,18 @@ void Droideka_Movement::stable_movement()
         cog[3][jj] = deplacement[jj];
     }
 
+    float distances[NB];
+    float total_distance = 0.0;
+    for (int ii = 0; ii < nb; ii++)
+    {
+        distances[ii] = sqrt((cog[ii + 1][0] - cog[ii][0]) * (cog[ii + 1][0] - cog[ii][0]) + (cog[ii + 1][1] - cog[ii][1]) * (cog[ii + 1][1] - cog[ii][1]));
+        total_distance += distances[ii];
+    }
+    float alpha1, alpha2, alpha3;
+    alpha1 = 2.5 * distances[0] / total_distance;
+    alpha2 = alpha1 + 2.5 * distances[1] / total_distance;
+    alpha3 = alpha2 + 2.5 * distances[2] / total_distance;
+
     // Block 2
     Serial.println("COG coordinates");
     for (int8_t ii = 0; ii < nb + 1; ii++)
@@ -549,39 +561,39 @@ void Droideka_Movement::stable_movement()
     {
         sections[0] = 0;
         sections[1] = sections[0];
-        sections[2] = 1.0 * delta_time + 0.0 * lifting_leg_time;
-        sections[3] = 1.0 * delta_time + 0.5 * lifting_leg_time;
-        sections[4] = 1.0 * delta_time + 1.0 * lifting_leg_time;
-        sections[5] = 2.0 * delta_time + 1.0 * lifting_leg_time;
-        sections[6] = 2.0 * delta_time + 1.5 * lifting_leg_time;
-        sections[7] = 2.0 * delta_time + 2.0 * lifting_leg_time;
-        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[2] = alpha1 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = alpha1 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = alpha1 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = alpha2 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = alpha2 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = alpha2 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = alpha3 * delta_time + 2.0 * lifting_leg_time;
         sections[9] = sections[8];
     }
     else if (seq == FINISHING_SEQUENCE)
     {
         sections[0] = 0;
         sections[1] = sections[0];
-        sections[2] = 0.5 * delta_time + 0.0 * lifting_leg_time;
-        sections[3] = 0.5 * delta_time + 0.5 * lifting_leg_time;
-        sections[4] = 0.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[5] = 1.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[6] = 1.5 * delta_time + 1.5 * lifting_leg_time;
-        sections[7] = 1.5 * delta_time + 2.0 * lifting_leg_time;
-        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[2] = alpha1 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = alpha1 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = alpha1 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = alpha2 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = alpha2 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = alpha2 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = alpha3 * delta_time + 2.0 * lifting_leg_time;
         sections[9] = sections[8];
     }
     else if (seq == INTERMEDIATE_SEQUENCE)
     {
         sections[0] = 0;
         sections[1] = sections[0];
-        sections[2] = 0.5 * delta_time + 0.0 * lifting_leg_time;
-        sections[3] = 0.5 * delta_time + 0.5 * lifting_leg_time;
-        sections[4] = 0.5 * delta_time + 1.0 * lifting_leg_time;
-        sections[5] = 2.0 * delta_time + 1.0 * lifting_leg_time;
-        sections[6] = 2.0 * delta_time + 1.5 * lifting_leg_time;
-        sections[7] = 2.0 * delta_time + 2.0 * lifting_leg_time;
-        sections[8] = 2.5 * delta_time + 2.0 * lifting_leg_time;
+        sections[2] = alpha1 * delta_time + 0.0 * lifting_leg_time;
+        sections[3] = alpha1 * delta_time + 0.5 * lifting_leg_time;
+        sections[4] = alpha1 * delta_time + 1.0 * lifting_leg_time;
+        sections[5] = alpha2 * delta_time + 1.0 * lifting_leg_time;
+        sections[6] = alpha2 * delta_time + 1.5 * lifting_leg_time;
+        sections[7] = alpha2 * delta_time + 2.0 * lifting_leg_time;
+        sections[8] = alpha3 * delta_time + 2.0 * lifting_leg_time;
         sections[9] = sections[8];
     }
     for (unsigned int ii = 0; ii < nb_iter; ii++)
