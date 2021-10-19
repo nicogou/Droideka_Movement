@@ -4,74 +4,121 @@ Droideka_Movement::Droideka_Movement()
 {
 }
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span)
+Droideka_Movement::Droideka_Movement(Movement_Type mvmt_type, Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span)
 {
     start_position = start_position_;
     time_span = span * 1000;
+    type = mvmt_type;
 
-    type = CENTER_OF_GRAVITY_TRAJ;
     establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_vertical, throttle_angle);
-    end_position = get_final_position(start_position);
 }
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span)
+ErrorCode Droideka_Movement::establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_vertical_zeroed, float throttle_angle_zeroed)
 {
-    start_position = start_position_;
-    time_span = span * 1000;
+    establish_deplacement(throttle_longitudinal_zeroed, throttle_lateral_zeroed, throttle_angle_zeroed); // TODO: handle vertical move.
+    Serial.print("Deplacement X : ");
+    Serial.print(deplacement[0]);
+    Serial.print("\t Deplacement Y : ");
+    Serial.println(deplacement[1]);
+    Serial.print("Direction : ");
+    Serial.println(direction * 180 / PI);
+    Serial.print("Rotation : ");
+    Serial.println(rotation);
+    switch (type)
+    {
+    case 1: // COG_TRAJ
+        return NO_ERROR;
+        break;
+    case 2: // STABLE_GAIT
+        establish_legs_order(direction);
+        moving_leg_nb = 2;
+        stable_movement();
+        return NO_ERROR;
+        break;
+    case 3: // TROT_GAIT
+        return NO_ERROR;
+        break;
+    case 4: // SEQUENCE
+        return NO_ERROR;
+        break;
 
-    type = ROBOT_TRAJ;
-    establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_angle);
+    default:
+        break;
+    }
+
     end_position = get_final_position(start_position);
     end_position.print_position("End position");
+    return NO_ERROR;
 }
 
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span)
+// Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span)
+// {
+//     start_position = start_position_;
+//     time_span = span * 1000;
+
+//     type = CENTER_OF_GRAVITY_TRAJ;
+//     establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_vertical, throttle_angle);
+//     end_position = get_final_position(start_position);
+// }
+
+// Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span)
+// {
+//     start_position = start_position_;
+//     time_span = span * 1000;
+
+//     type = ROBOT_TRAJ;
+//     establish_cog_movement(throttle_longitudinal, throttle_lateral, throttle_angle);
+//     end_position = get_final_position(start_position);
+//     end_position.print_position("End position");
+// }
+
+// Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span)
+// {
+//     type = CENTER_OF_GRAVITY_TRAJ;
+
+//     start_position = start_position_;
+//     time_span = span * 1000;
+
+//     for (unsigned int ii = 0; ii < nb_iter; ii++)
+//     {
+//         params[0][ii] = trans_x[ii];
+//         params[1][ii] = trans_y[ii];
+//         params[2][ii] = trans_z[ii];
+//         params[3][ii] = rot_angle[ii];
+//         for (int jj = 4; jj < 12; jj++)
+//         {
+//             params[jj][ii] = 0;
+//         }
+
+//         time_iter[ii] = (ii + 1) * time_span / nb_iter;
+//     }
+// }
+
+// Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int8_t one_leg = -1)
+// {
+//     type = LEGS_TRAJ;
+
+//     start_position = start_position_;
+//     leg_id = one_leg;
+//     time_span = span * 1000;
+
+//     for (unsigned int ii = 0; ii < nb_iter; ii++)
+//     {
+//         params[0][ii] = theta[ii];
+//         params[1][ii] = rho[ii];
+//         params[2][ii] = height[ii];
+//         for (int jj = 3; jj < 12; jj++)
+//         {
+//             params[jj][ii] = 0;
+//         }
+
+//         time_iter[ii] = (ii + 1) * time_span / nb_iter;
+//     }
+// }
+
+Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span)
 {
-    type = CENTER_OF_GRAVITY_TRAJ;
-
-    start_position = start_position_;
-    time_span = span * 1000;
-
-    for (unsigned int ii = 0; ii < nb_iter; ii++)
-    {
-        params[0][ii] = trans_x[ii];
-        params[1][ii] = trans_y[ii];
-        params[2][ii] = trans_z[ii];
-        params[3][ii] = rot_angle[ii];
-        for (int jj = 4; jj < 12; jj++)
-        {
-            params[jj][ii] = 0;
-        }
-
-        time_iter[ii] = (ii + 1) * time_span / nb_iter;
-    }
-}
-
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int8_t one_leg = -1)
-{
-    type = LEGS_TRAJ;
-
-    start_position = start_position_;
-    leg_id = one_leg;
-    time_span = span * 1000;
-
-    for (unsigned int ii = 0; ii < nb_iter; ii++)
-    {
-        params[0][ii] = theta[ii];
-        params[1][ii] = rho[ii];
-        params[2][ii] = height[ii];
-        for (int jj = 3; jj < 12; jj++)
-        {
-            params[jj][ii] = 0;
-        }
-
-        time_iter[ii] = (ii + 1) * time_span / nb_iter;
-    }
-}
-
-Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span, int8_t one_leg = -1)
-{
-    type = DIRECT_FOOT_MVMT;
+    type = SEQUENCE;
 
     start_position = start_position_;
 
@@ -84,22 +131,18 @@ Droideka_Movement::Droideka_Movement(Droideka_Position start_position_, Droideka
         time_iter[ii] = 0;
     }
     nb_iter = 0;
-    add_position(start_position, end_position_, span, one_leg);
+    add_position(end_position_, span);
 }
 
-void Droideka_Movement::add_position(Droideka_Position start_position_, Droideka_Position pos, unsigned long span, int8_t one_leg = -1)
+void Droideka_Movement::add_position(Droideka_Position pos, unsigned long span)
 {
-    if (type == DIRECT_FOOT_MVMT)
+    if (type == SEQUENCE)
     {
         for (int ii = 0; ii < LEG_NB; ii++)
         {
             for (int jj = 0; jj < 3; jj++)
             {
                 params[(LEG_NB - 1) * ii + jj][nb_iter] = pos.legs[ii][jj];
-                if (one_leg != -1 && ii != one_leg)
-                {
-                    params[(LEG_NB - 1) * ii + jj][nb_iter] = start_position_.legs[ii][jj];
-                }
             }
         }
 
@@ -109,48 +152,48 @@ void Droideka_Movement::add_position(Droideka_Position start_position_, Droideka
     }
 }
 
-ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
-{
-    for (unsigned int ii = 0; ii < nb_iter; ii++)
-    {
-        params[0][ii] = ((float)throttle_lateral - 105.0) * (2.0 - (-2.0)) / (792.0 - 105.0) + -2.0;
-        params[1][ii] = ((float)throttle_longitudinal - 831.0) * (2.0 - (-2.0)) / (140.0 - 831.0) + -2.0;
-        params[2][ii] = ((float)throttle_vertical - 825.0) * (-2.0 - (2.0)) / (137.0 - 825.0) + 2.0;
-        params[3][ii] = ((float)throttle_angle - 185.0) * (20.0 - (-20.0)) / (863.0 - 185.0) + -20.0;
+// ErrorCode Droideka_Movement::establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle)
+// {
+//     for (unsigned int ii = 0; ii < nb_iter; ii++)
+//     {
+//         params[0][ii] = ((float)throttle_lateral - 105.0) * (2.0 - (-2.0)) / (792.0 - 105.0) + -2.0;
+//         params[1][ii] = ((float)throttle_longitudinal - 831.0) * (2.0 - (-2.0)) / (140.0 - 831.0) + -2.0;
+//         params[2][ii] = ((float)throttle_vertical - 825.0) * (-2.0 - (2.0)) / (137.0 - 825.0) + 2.0;
+//         params[3][ii] = ((float)throttle_angle - 185.0) * (20.0 - (-20.0)) / (863.0 - 185.0) + -20.0;
 
-        time_iter[ii] = (ii + 1) * time_span / nb_iter;
-    }
+//         time_iter[ii] = (ii + 1) * time_span / nb_iter;
+//     }
 
-    leg_order[3] = 1;
-    leg_order[1] = 2;
-    leg_order[2] = 3;
-    leg_order[0] = 4;
+//     leg_order[3] = 1;
+//     leg_order[1] = 2;
+//     leg_order[2] = 3;
+//     leg_order[0] = 4;
 
-    moving_leg_nb = 4;
-    // delta_time = nb_iter / (moving_leg_nb * 2);
-    // stable_movement();
+//     moving_leg_nb = 4;
+//     // delta_time = nb_iter / (moving_leg_nb * 2);
+//     // stable_movement();
 
-    return NO_ERROR;
-}
+//     return NO_ERROR;
+// }
 
-ErrorCode Droideka_Movement::establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed)
-{
-    establish_deplacement(throttle_longitudinal_zeroed, throttle_lateral_zeroed, throttle_angle_zeroed);
-    Serial.print("Deplacement X : ");
-    Serial.print(deplacement[0]);
-    Serial.print("\t Deplacement Y : ");
-    Serial.println(deplacement[1]);
-    Serial.print("Direction : ");
-    Serial.println(direction * 180 / PI);
-    Serial.print("Rotation : ");
-    Serial.println(rotation);
-    establish_legs_order(direction);
+// ErrorCode Droideka_Movement::establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed)
+// {
+//     establish_deplacement(throttle_longitudinal_zeroed, throttle_lateral_zeroed, throttle_angle_zeroed);
+//     Serial.print("Deplacement X : ");
+//     Serial.print(deplacement[0]);
+//     Serial.print("\t Deplacement Y : ");
+//     Serial.println(deplacement[1]);
+//     Serial.print("Direction : ");
+//     Serial.println(direction * 180 / PI);
+//     Serial.print("Rotation : ");
+//     Serial.println(rotation);
+//     establish_legs_order(direction);
 
-    moving_leg_nb = 2;
-    stable_movement();
+//     moving_leg_nb = 2;
+//     stable_movement();
 
-    return NO_ERROR;
-}
+//     return NO_ERROR;
+// }
 
 void Droideka_Movement::establish_deplacement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed)
 {
@@ -246,19 +289,19 @@ ErrorCode Droideka_Movement::establish_legs_order(float direction)
 
 Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, int ii)
 {
-    if (type == CENTER_OF_GRAVITY_TRAJ)
+    if (type == COG_TRAJ)
     {
-        return get_future_position(start_pos, params[0][ii], params[1][ii], params[2][ii], params[3][ii]);
+        // return get_future_position(start_pos, params[0][ii], params[1][ii], params[2][ii], params[3][ii]);
     }
-    else if (type == LEGS_TRAJ)
+    else if (type == TROT_GAIT)
     {
-        return get_future_position(params[0][ii], params[1][ii], params[2][ii], leg_id);
+        // return get_future_position(params[0][ii], params[1][ii], params[2][ii], leg_id);
     }
-    else if (type == DIRECT_FOOT_MVMT)
+    else if (type == SEQUENCE)
     {
         return get_future_position(ii);
     }
-    else if (type == ROBOT_TRAJ)
+    else if (type == STABLE_GAIT)
     {
         return get_future_position(start_pos, end_position, ii);
     }
@@ -278,28 +321,28 @@ Droideka_Position Droideka_Movement::get_future_position(int iteration)
     return final_pos;
 }
 
-Droideka_Position Droideka_Movement::get_future_position(float theta, float rho, float height, int8_t one_leg = -1)
-{
-    float temp[LEG_NB][3];
-    for (int ii = 0; ii < LEG_NB; ii++)
-    {
-        if (one_leg != -1)
-        {
-            ii = one_leg;
-        }
+// Droideka_Position Droideka_Movement::get_future_position(float theta, float rho, float height, int8_t one_leg = -1)
+// {
+//     float temp[LEG_NB][3];
+//     for (int ii = 0; ii < LEG_NB; ii++)
+//     {
+//         if (one_leg != -1)
+//         {
+//             ii = one_leg;
+//         }
 
-        temp[ii][0] = theta;
-        temp[ii][1] = rho;
-        temp[ii][2] = height;
+//         temp[ii][0] = theta;
+//         temp[ii][1] = rho;
+//         temp[ii][2] = height;
 
-        if (one_leg != -1)
-        {
-            ii = LEG_NB;
-        }
-    }
-    Droideka_Position final_pos(temp);
-    return final_pos;
-}
+//         if (one_leg != -1)
+//         {
+//             ii = LEG_NB;
+//         }
+//     }
+//     Droideka_Position final_pos(temp);
+//     return final_pos;
+// }
 
 Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, float trans_x, float trans_y, float trans_z, float rot_angle)
 {
@@ -391,7 +434,7 @@ Droideka_Position Droideka_Movement::get_final_position(Droideka_Position start_
     float temp[LEG_NB][3];
     float temp_params[4];
     Droideka_Position temp_pos = get_future_position(start_pos, params[0][TIME_SAMPLE - 1], params[1][TIME_SAMPLE - 1], params[2][TIME_SAMPLE - 1], params[3][TIME_SAMPLE - 1]);
-    if (type != ROBOT_TRAJ)
+    if (type != STABLE_GAIT)
     {
         return temp_pos;
     }
@@ -511,7 +554,7 @@ void Droideka_Movement::stable_movement()
         }
     }
 
-    //Block 1
+    // Block 1
     for (int8_t ii = 0; ii < LEG_NB; ii++)
     {
         for (int8_t jj = 0; jj < 2; jj++)
