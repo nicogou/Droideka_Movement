@@ -404,7 +404,6 @@ void Droideka_Movement::stable_movement()
 {
     int8_t index;
     float M_default[LEG_NB][2];
-    moving_leg_nb = 2;
 
     // start_position.print_position("Start position");
 

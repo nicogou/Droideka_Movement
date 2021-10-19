@@ -1,10 +1,10 @@
 enum Movement_Type
 {
     UNSPECIFIED = 0,
-    COG_TRAJ = 1,    // CENTER_OF_GRAVITY_TRAJ = 1,
-    STABLE_GAIT = 2, // LEGS_TRAJ = 2,
-    TROT_GAIT = 3,   // ROBOT_TRAJ = 3,
-    SEQUENCE = 4,    // DIRECT_FOOT_MVMT = 4,
+    COG_TRAJ = 1,
+    STABLE_GAIT = 2,
+    TROT_GAIT = 3,
+    SEQUENCE = 4,
 };
 typedef enum Movement_Type Movement_Type;
 
@@ -42,7 +42,6 @@ public:
 
     float M[LEG_NB][2];
     float M_prime[LEG_NB][2];
-    // int8_t nb = 5;
     int8_t nb = NB;
     float cog[NB + 1][2];     // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
     float factor = 1.0 / 5.0; // 1/10 avait marché lors d'essais préliminaires.
@@ -74,9 +73,8 @@ public:
     MovementSequence next_seq = STARTING_SEQUENCE;
 
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
-    int8_t moving_leg_nb = 2;
     unsigned long delta_time = 28;
-    unsigned long lifting_leg_time = 14; // 1 * delta_time;
+    unsigned long lifting_leg_time = 14;
 
     float params[12][TIME_SAMPLE];
     float reverse_params[12][TIME_SAMPLE];
