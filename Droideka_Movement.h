@@ -1,10 +1,10 @@
 enum Movement_Type
 {
     UNSPECIFIED = 0,
-    CENTER_OF_GRAVITY_TRAJ = 1,
-    LEGS_TRAJ = 2,
-    ROBOT_TRAJ = 3,
-    DIRECT_FOOT_MVMT = 4,
+    COG_TRAJ = 1,
+    STABLE_GAIT = 2,
+    TROT_GAIT = 3,
+    SEQUENCE = 4,
 };
 typedef enum Movement_Type Movement_Type;
 
@@ -42,7 +42,6 @@ public:
 
     float M[LEG_NB][2];
     float M_prime[LEG_NB][2];
-    // int8_t nb = 5;
     int8_t nb = NB;
     float cog[NB + 1][2];     // First index = {0, 0}; Last index = {deplacement_x, deplacement_y}; In-between index = center of gravity of the triangles formed by the three touching legs.
     float factor = 1.0 / 5.0; // 1/10 avait marché lors d'essais préliminaires.
@@ -74,9 +73,8 @@ public:
     MovementSequence next_seq = STARTING_SEQUENCE;
 
     int8_t leg_order[LEG_NB] = {1, 2, 3, 4};
-    int8_t moving_leg_nb = 2;
     unsigned long delta_time = 28;
-    unsigned long lifting_leg_time = 14; //1 * delta_time;
+    unsigned long lifting_leg_time = 14;
 
     float params[12][TIME_SAMPLE];
     float reverse_params[12][TIME_SAMPLE];
@@ -93,18 +91,14 @@ public:
         {1, -1}};
 
     Droideka_Movement();
-    Droideka_Movement(Droideka_Position start_position_, float trans_x[TIME_SAMPLE], float trans_y[TIME_SAMPLE], float trans_z[TIME_SAMPLE], float rot_angle[TIME_SAMPLE], unsigned long span);
-    Droideka_Movement(Droideka_Position start_position_, float theta[TIME_SAMPLE], float rho[TIME_SAMPLE], float height[TIME_SAMPLE], unsigned long span, int8_t one_leg = -1);
-    Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span, int8_t one_leg = -1);
-    Droideka_Movement(Droideka_Position start_position_, int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle, unsigned long span);
-    Droideka_Movement(Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span);
-    void add_position(Droideka_Position start_position_, Droideka_Position pos, unsigned long span, int8_t one_leg = -1);
-    ErrorCode establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
-    ErrorCode establish_cog_movement(int16_t throttle_longitudinal, int16_t throttle_lateral, int16_t throttle_vertical, int16_t throttle_angle);
+    Droideka_Movement(Movement_Type mvmt_type, Droideka_Position start_position_, float throttle_longitudinal, float throttle_lateral, float throttle_vertical, float throttle_angle, unsigned long span);
+    ErrorCode establish_cog_movement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_vertical_zeroed, float throttle_angle_zeroed);
+
+    Droideka_Movement(Droideka_Position start_position_, Droideka_Position end_position_, unsigned long span);
+    void add_position(Droideka_Position pos, unsigned long span);
     Droideka_Position get_future_position(Droideka_Position start_pos, int ii);                                                       // Fonction générale appelée par la classe Droideka en fonction du mouvement.
     Droideka_Position get_future_position(int ii);                                                                                    // Séquence de Droideka_Position.
     Droideka_Position get_future_position(Droideka_Position start_pos, float trans_x, float trans_y, float trans_z, float rot_angle); // Trajectoire du centre de gravité
-    Droideka_Position get_future_position(float theta, float rho, float height, int8_t one_leg = -1);                                 // Trajectoire des jambes ou de la jambe spécifiée si leg != -1.
     Droideka_Position get_future_position(Droideka_Position start_pos, Droideka_Position end_pos, unsigned int ii);                   // Marche.
     Droideka_Position get_final_position(Droideka_Position start_pos);
     float *get_lifted_position(int8_t leg, Droideka_Position start_pos, Droideka_Position end_pos, int time_, int time_start_lifting, int time_end_lifting);
@@ -112,6 +106,7 @@ public:
     bool compare_directions();
     void establish_deplacement(float throttle_longitudinal_zeroed, float throttle_lateral_zeroed, float throttle_angle_zeroed);
     void stable_movement();
+    void trotting_movement();
     void keep_going();
     float P(int n, float t);
 };
