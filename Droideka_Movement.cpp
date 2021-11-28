@@ -189,6 +189,7 @@ ErrorCode Droideka_Movement::establish_legs_order(float direction)
         leg_order[1] = 3;
         leg_order[2] = 3;
     }
+    return NO_ERROR;
 }
 
 Droideka_Position Droideka_Movement::get_future_position(Droideka_Position start_pos, int ii)
@@ -403,7 +404,7 @@ float *Droideka_Movement::get_lifted_position(int8_t leg, Droideka_Position debu
 void Droideka_Movement::stable_movement()
 {
     int8_t index;
-    float M_default[LEG_NB][2];
+    // float M_default[LEG_NB][2];
 
     // start_position.print_position("Start position");
 
